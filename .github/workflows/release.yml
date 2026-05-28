@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag (e.g. v2.47.0)'
+        required: true
+        default: 'v2.47.0'
 
 permissions:
   contents: write
@@ -31,7 +37,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: PinballMagic ${{ github.ref_name }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: PinballMagic ${{ github.event.inputs.tag || github.ref_name }}
           body: |
             ## PinballMagic ${{ github.ref_name }}
 
