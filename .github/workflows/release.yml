@@ -48,13 +48,53 @@ jobs:
             | `PinballMagic Setup *.exe` | Installer — recommended for most users |
             | `PinballMagic *.exe` | Portable — run without installing |
 
-            ### What's new
+            ### Features
+            **Collection management**
+            - Scans your Tables, ROMs, backglass, wheel, and media folders automatically
+            - Matches your installed files against the full VPS database (2,500+ tables)
+            - Shows exactly what you have, what's missing, and what has a newer version available
+            - Duplicate VPX detection — see tables with multiple files and clean them up
+            - Missing media detection — find installed tables without wheel art or backglass
+            - PinUp Popper integration — shows which tables aren't registered, with one-click ignore
+
+            **Installing & updating**
+            - Drag-and-drop or pick files to install — VPX, ZIP, RAR, ROM, backglass, wheel, PuP Pack all auto-classified
+            - Staging folder watch — drop files in a folder and get notified when they're ready to install
+            - Direct download to staging from inside the app (Electron version)
+            - Batch download all available updates in one click
+            - Full install history with timestamps
+
+            **Browsing & discovery**
+            - Filter by type (SS / EM / PM / Original), theme/genre, manufacturer, year range
+            - Era quick-picks: EM, Classic (1978–89), Golden Age (1990–2000), Modern (2001+)
+            - Curated featured lists: VPW Best Of, Community Picks, Hot Right Now, EM Classics
+            - ⭐ Best Of filter — top tables from VPinWorkshop creators
+            - Recently updated filter — VPS tables updated in the last 90 days
+            - List view or thumbnail grid
+
+            **Community**
+            - Star-rate any table (1–5 stars) — ratings sync to the community
+            - See community average rating and total votes on every table
+            - Comment threads on every table — post with a display name
+
+            **Personal**
+            - Personal star ratings and notes on any table (stored locally)
+            - Multi-cabinet profiles — switch path sets instantly
+            - Settings panel — default filter, default view, staging behavior, notifications
+            - Activity log with one-click download
+
+            **Open in Explorer · Launch VPX · Keyboard shortcuts · Auto-detect paths · Popper DB backup**
+
+            ---
+            ### What's new in this release
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full changelog.
 
             ### First time?
-            1. Download the Setup installer
-            2. Run it — Windows may show a SmartScreen warning (click **More info → Run anyway**)
-            3. PinballMagic will open and prompt you to download the VPS database
+            1. Download the Setup installer below
+            2. Run it — Windows may show a SmartScreen warning, click **More info → Run anyway**
+            3. PinballMagic opens and prompts you to download the VPS database (~5 MB)
+            4. Click **Auto-detect** to find your Visual Pinball X and PinUp Popper folders automatically
+            5. Browse 2,500+ tables, see what you have, and start grabbing what you're missing
           files: dist/*.exe
           fail_on_unmatched_files: false
           draft: false
