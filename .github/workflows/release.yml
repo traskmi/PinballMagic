@@ -40,7 +40,11 @@ jobs:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           name: PinballMagic ${{ github.event.inputs.tag || github.ref_name }}
           body: |
-            ## PinballMagic ${{ github.ref_name }}
+            ## PinballMagic ${{ github.event.inputs.tag || github.ref_name }}
+
+            > **For virtual pinball cabinets and desktop PCs running Visual Pinball X.**
+            > If you have a dedicated pinball cabinet — or a Windows PC set up to play virtual pinball — this app manages your table collection for you.
+            > Requires Windows 10/11 x64 · Works with Visual Pinball X + PinUp Popper
 
             ### Download
             | File | Description |
@@ -55,16 +59,19 @@ jobs:
             - Shows exactly what you have, what's missing, and what has a newer version available
             - Duplicate VPX detection — see tables with multiple files and clean them up
             - Missing media detection — find installed tables without wheel art or backglass
-            - PinUp Popper integration — shows which tables aren't registered, with one-click ignore
+            - PinUp Popper integration — installed tables are registered in Popper's database automatically
 
             **Installing & updating**
-            - Drag-and-drop or pick files to install — VPX, ZIP, RAR, ROM, backglass, wheel, PuP Pack all auto-classified
-            - Staging folder watch — drop files in a folder and get notified when they're ready to install
+            - Drag-and-drop or pick files to install — VPX, ZIP, RAR, ROM, backglass, wheel, PuP Pack all auto-classified and sorted into the right folders
+            - Staging folder watch — drop files in a folder and get a desktop notification when they're ready to install
             - Direct download to staging from inside the app (Electron version)
             - Batch download all available updates in one click
+            - Version conflict resolution — see all available versions and choose which to keep
             - Full install history with timestamps
 
             **Browsing & discovery**
+            - Search by table name or creator across the full 2,500+ table catalog
+            - Sort A-Z, by year, or by recently updated in VPS
             - Filter by type (SS / EM / PM / Original), theme/genre, manufacturer, year range
             - Era quick-picks: EM, Classic (1978–89), Golden Age (1990–2000), Modern (2001+)
             - Curated featured lists: VPW Best Of, Community Picks, Hot Right Now, EM Classics
@@ -78,8 +85,8 @@ jobs:
             - Comment threads on every table — post with a display name
 
             **Personal**
-            - Personal star ratings and notes on any table (stored locally)
-            - Multi-cabinet profiles — switch path sets instantly
+            - Personal star ratings and private text notes on any table (stored locally)
+            - Multi-cabinet profiles — switch between different cabinet path sets instantly
             - Settings panel — default filter, default view, staging behavior, notifications
             - Activity log with one-click download
 
@@ -95,6 +102,13 @@ jobs:
             3. PinballMagic opens and prompts you to download the VPS database (~5 MB)
             4. Click **Auto-detect** to find your Visual Pinball X and PinUp Popper folders automatically
             5. Browse 2,500+ tables, see what you have, and start grabbing what you're missing
+
+            ### Good to know
+            - **Close PinUp Popper before installing** — writing to its database while Popper is running can corrupt it
+            - **Auto-detect: pick your root vPinball folder** (e.g. `C:\vPinball`), not a subfolder like `Tables` or `roms`
+            - **Re-scan after installing** — click Re-scan Tables Folder to refresh installed badges, version info, and duplicate detection
+            - **VPU Remix Patches (.dif) need VPUPatcher64** — the app detects these and shows instructions, but the external tool from vpuniverse.com applies them
+            - Full list of limitations is in the **? Help** button inside the app
           files: dist/*.exe
           fail_on_unmatched_files: false
           draft: false

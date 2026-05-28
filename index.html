@@ -196,7 +196,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.47.0 — Prototype</div>
+  <div class="version" onclick="showChangelog()">v2.48.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -207,6 +207,57 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div id="historyModalBody" style="min-height:60px"></div>
     <div style="margin-top:16px;text-align:right">
       <button onclick="clearInstallHistory()" style="padding:5px 12px;background:#2a2a3a;color:#666;border:1px solid #3a3a4a;border-radius:6px;font-size:12px;cursor:pointer">Clear all</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this)hideHelpModal()">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <h2>? Help &amp; Known Limitations</h2>
+      <button class="modal-close" onclick="hideHelpModal()">✕</button>
+    </div>
+    <div style="max-height:72vh;overflow-y:auto;padding-right:4px;font-size:13px;line-height:1.6;color:#ccc">
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">File Classification</div>
+        <p><strong>Cabinet vs Desktop detection is filename-only.</strong> The app reads keywords like <code>_CAB</code>, <code>_Cabinet</code>, <code>_Desktop</code>, <code>_4K</code> from the filename. Files without these labels are treated as universal. Modern VPW releases label themselves correctly; older tables are generally universal.</p>
+        <p><strong>ZIPs with no recognised content are classified as ROM.</strong> If a ZIP contains nothing the app recognises (no VPX, B2S, POV, media, or PuP Pack markers) it is moved to <code>VPinMAME\roms\</code>. Move it manually if that's wrong.</p>
+        <p><strong>VPU Remix Patches (.dif) are manual-only.</strong> ZIPs containing <code>.dif</code> files need the external <strong>VPUPatcher64</strong> tool from vpuniverse.com. The app shows instructions but cannot apply these patches itself.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">PinUp Popper Integration</div>
+        <p><strong>Close Popper before installing.</strong> Writing to <code>PUPDatabase.db</code> while Popper is running can corrupt the database. The app will prompt you to confirm Popper is closed.</p>
+        <p><strong>Registration matching may miss non-standard filenames.</strong> Detection compares a normalised version of the VPX filename against what Popper stored. If Popper's entry was manually renamed to something completely different, the "not in Popper" badge may be wrong. Re-scan Popper DB after any manual edits.</p>
+        <p><strong>SQL fallback requires DB Browser for SQLite.</strong> If the Popper DB path isn't set, the app generates a <code>popper_import.sql</code> file. Apply it via DB Browser for SQLite → Execute SQL tab → F5 → Write Changes. Always back up the DB first.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">PuP Packs</div>
+        <p><strong>The 🎮 PuP Pack button is for extracted folders only.</strong> Use it to point at an already-extracted PuP Pack folder (e.g. <code>Aladdin\</code>). For PuP Pack ZIP files, use <strong>📥 Install Files</strong> instead — ZIPs are auto-detected and extracted automatically.</p>
+        <p><strong>Patch ZIPs merge into existing folders.</strong> ZIPs whose name contains "patch" or "update" are merged into the existing <code>PUPVideos\{tablename}\</code> folder, overwriting files with the same name.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">Path Setup</div>
+        <p><strong>Auto-detect needs the right root folder.</strong> Pick a folder that contains both <code>VisualPinball</code> and <code>PinUPSystem</code> as direct or nested subfolders — typically <code>C:\vPinball</code>. If you pick a subfolder like <code>Tables</code> or <code>roms</code>, most paths won't be found.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">Scanning &amp; Detection</div>
+        <p><strong>Re-scan after installing.</strong> Installed badges, version detection, duplicate detection, and Popper status are all based on the last scan. After installing new files click <strong>Re-scan</strong> to refresh everything.</p>
+        <p><strong>ROM name in table detail uses VPS data, not per-version data.</strong> VPS stores one ROM entry per table — not one per VPX version. If a newer VPX version needs a different ROM revision than VPS lists, the detail panel will show the stale value. The install plan compensates automatically when you drop a ROM alongside the VPX.</p>
+        <p><strong>Binary version extraction covers 95%+ of tables.</strong> The app reads <code>cVersion</code> from the first 4 MB and last 2 MB of each VPX file. Tables where the script falls outside these regions fall back to filename-based version detection.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">General</div>
+        <p><strong>"Recently Updated" uses VPS timestamps, not your install date.</strong> A table you installed 2 years ago can appear as recently updated if someone uploaded a new version this week.</p>
+        <p><strong>Duplicate detection uses compact name matching.</strong> Two VPX files are considered duplicates if their names reduce to the same string after stripping version numbers, years, and punctuation. Check both filenames before deleting.</p>
+        <p><strong>Backup rotation keeps only 3 copies.</strong> <code>PinballMagic\Backups\</code> auto-prunes to the 3 most recent <code>PUPDatabase.db</code> backups. Copy older backups elsewhere if you need to keep more.</p>
+        <p><strong>"no bg media" badge is informational only.</strong> It means no backglass <em>video</em> in Popper's <code>POPMedia\BackGlass\</code> — this is separate from the <code>.directb2s</code> file. Popper media videos come from VPinUniverse and cannot be downloaded from within this app. The table will play correctly regardless.</p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -286,6 +337,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.48.0<span class="cl-date">2026-05-27</span></div>
+      <div class="cl-item">? Help modal — toolbar button opens scrollable help covering all known limitations: file classification rules, Popper gotchas, PuP Pack behaviour, path setup tips, scan/detection edge cases, and general quirks; release notes updated with "Good to know" section</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.47.0<span class="cl-date">2026-05-27</span></div>
@@ -1029,6 +1084,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
             <button class="btn-sm" onclick="showLogModal()" style="color:#555" title="Activity log">📋 Log</button>
             <button class="btn-sm" onclick="showHistoryModal()" style="color:#555" title="Install history">🕐 History</button>
             <button class="btn-sm" onclick="showSettingsModal()" style="color:#555" title="Settings">⚙ Settings</button>
+            <button class="btn-sm" onclick="showHelpModal()" style="color:#555" title="Help &amp; known limitations">? Help</button>
           </div>
         </div>
       </div>
@@ -1175,6 +1231,9 @@ function showSettingsModal() {
 function hideSettingsModal() {
   document.getElementById('settingsModal').classList.remove('open');
 }
+
+function showHelpModal() { document.getElementById('helpModal').classList.add('open'); }
+function hideHelpModal() { document.getElementById('helpModal').classList.remove('open'); }
 
 // --- Logging ---
 const LOG_ENTRIES = [];
