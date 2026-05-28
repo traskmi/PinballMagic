@@ -1,0 +1,31 @@
+{
+  "updated": "2026-05-27",
+  "version": 1,
+  "note": "VPS table IDs can be found in the VPS database JSON (each table has an 'id' field). Open the .json, search for the table name, copy its id value.",
+  "categories": [
+    {
+      "id": "vpw_picks",
+      "label": "⭐ VPW Best Of",
+      "description": "Hand-picked top tables from VPinWorkshop creators",
+      "ids": []
+    },
+    {
+      "id": "community_favs",
+      "label": "🏆 Community Picks",
+      "description": "Highly rated by the PinballMagic community",
+      "ids": []
+    },
+    {
+      "id": "hot_now",
+      "label": "🔥 Hot Right Now",
+      "description": "Recently updated tables worth grabbing",
+      "ids": []
+    },
+    {
+      "id": "em_classics",
+      "label": "🎰 EM Classics",
+      "description": "Essential electro-mechanical tables",
+      "ids": []
+    }
+  ]
+}

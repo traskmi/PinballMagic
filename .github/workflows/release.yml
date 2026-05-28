@@ -1,0 +1,54 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: PinballMagic ${{ github.ref_name }}
+          body: |
+            ## PinballMagic ${{ github.ref_name }}
+
+            ### Download
+            | File | Description |
+            |------|-------------|
+            | `PinballMagic Setup *.exe` | Installer — recommended for most users |
+            | `PinballMagic *.exe` | Portable — run without installing |
+
+            ### What's new
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full changelog.
+
+            ### First time?
+            1. Download the Setup installer
+            2. Run it — Windows may show a SmartScreen warning (click **More info → Run anyway**)
+            3. PinballMagic will open and prompt you to download the VPS database
+          files: dist/*.exe
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false

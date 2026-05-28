@@ -1,0 +1,57 @@
+{
+  "name": "pinballmagic",
+  "version": "1.0.0",
+  "description": "Virtual pinball cabinet management tool",
+  "author": "PinballMagic",
+  "main": "main.js",
+  "scripts": {
+    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.pinballmagic.app",
+    "productName": "PinballMagic",
+    "icon": "assets/icon.ico",
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "assets/icon.ico",
+      "node_modules/yauzl/**",
+      "node_modules/fd-slicer/**",
+      "node_modules/buffer-crc32/**",
+      "node_modules/pend/**",
+      "node_modules/node-unrar-js/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "node-unrar-js": "^2.0.2",
+    "yauzl": "^2.10.0"
+  }
+}
