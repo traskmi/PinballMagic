@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listRar:          (p)                     => ipcRenderer.invoke('fs:listRar', p),
   extractRarFlat:   (p, dest, exts, opts)   => ipcRenderer.invoke('fs:extractRarFlat', p, dest, exts, opts),
   extractRarNested: (p, dest, prefix)       => ipcRenderer.invoke('fs:extractRarNested', p, dest, prefix),
-  extractArchiveMedias: (p, popmedia, vpxBase) => ipcRenderer.invoke('fs:extractArchiveMedias', p, popmedia, vpxBase),
+  extractArchiveMedias: (p, popmedia, vpxBase, pupvideos) => ipcRenderer.invoke('fs:extractArchiveMedias', p, popmedia, vpxBase, pupvideos),
   onExtractProgress:  (cb) => ipcRenderer.on('extract:progress', (_, d) => cb(d)),
   offExtractProgress: ()  => ipcRenderer.removeAllListeners('extract:progress'),
   watchStaging:    (p) => ipcRenderer.invoke('fs:watchStaging', p),

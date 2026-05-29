@@ -319,9 +319,9 @@ ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts, 
 // Keyword routing: Wheel→Wheel/, backglass→BackGlass/, DMD→DMD/, Topper→Topper/, Playfield→PlayField/
 // vpxBaseName: if provided, wheel/backglass images are renamed to match the VPX file.
 // Returns { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], skipped:[] }
-ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBase, vpxBaseName) => {
+ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBase, vpxBaseName, pupvideosBase) => {
   const isRar = /\.rar$/i.test(archivePath);
-  const MEDIA_EXTS = new Set(['.png','.jpg','.jpeg','.apng','.gif','.mp4','.f4v','.mkv','.mp3','.wav']);
+  const MEDIA_EXTS = new Set(['.png','.jpg','.jpeg','.apng','.gif','.mp4','.f4v','.mkv','.mp3','.wav','.ogg','.flac']);
   const results = { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], audio:[], skipped:[] };
 
   function getTargetSubfolder(filename, entryPath) {
@@ -360,31 +360,53 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
       }
     }
     if (!entries.length) return results;
-    // Extract matching entries
-    const extractor = await createExtractorFromFile({
-      filepath: archivePath,
-      targetPath: popmediaBase,
-      filenameTransform: (name) => {
-        const entryLower = name.replace(/\\/g, '/').toLowerCase();
-        const base2 = name.replace(/\\/g, '/').split('/').pop();
+    const nonAudioEntries = entries.filter(e => e.subfolder !== 'Audio');
+    const audioEntries    = entries.filter(e => e.subfolder === 'Audio');
+
+    // Pass 1: media files (Wheel, BackGlass, DMD, Topper, PlayField) → POPMedia
+    if (nonAudioEntries.length > 0) {
+      const extractor = await createExtractorFromFile({
+        filepath: archivePath,
+        targetPath: popmediaBase,
+        filenameTransform: (name) => {
+          const entryLower = name.replace(/\\/g, '/').toLowerCase();
+          const base2 = name.replace(/\\/g, '/').split('/').pop();
+          const subfolder = getTargetSubfolder(base2, entryLower);
+          if (!subfolder || subfolder === 'Audio') return base2; // safety net
+          const destDir = fsPath.join(popmediaBase, subfolder);
+          fs.mkdirSync(destDir, { recursive: true });
+          const finalName = shouldRename(subfolder, base2) ? vpxBaseName + '.' + base2.split('.').pop() : base2;
+          return fsPath.join(subfolder, finalName);
+        },
+      });
+      const extracted = extractor.extract({ files: (h) => nonAudioEntries.some(e => e.path === h.name) });
+      for (const f of extracted.files) {
+        const entryLower = f.fileHeader.name.replace(/\\/g, '/').toLowerCase();
+        const base2 = f.fileHeader.name.replace(/\\/g, '/').split('/').pop();
         const subfolder = getTargetSubfolder(base2, entryLower);
-        if (!subfolder) return base2; // safety net — pre-filter means this shouldn't be reached
-        const destDir = fsPath.join(popmediaBase, subfolder);
-        fs.mkdirSync(destDir, { recursive: true });
-        const finalName = shouldRename(subfolder, base2)
-          ? vpxBaseName + '.' + base2.split('.').pop()
-          : base2;
-        return fsPath.join(subfolder, finalName);
-      },
-    });
-    const extracted = extractor.extract({ files: (h) => entries.some(e => e.path === h.name) });
-    for (const f of extracted.files) {
-      const entryLower = f.fileHeader.name.replace(/\\/g, '/').toLowerCase();
-      const base2 = f.fileHeader.name.replace(/\\/g, '/').split('/').pop();
-      const subfolder = getTargetSubfolder(base2, entryLower);
-      const key = subfolder ? subfolder.toLowerCase() : null;
-      if (key && results[key]) results[key].push(base2); else results.skipped.push(base2);
-      event.sender.send('extract:progress', { file: base2, done: 1 });
+        const key = subfolder ? subfolder.toLowerCase() : null;
+        if (key && results[key]) results[key].push(base2); else results.skipped.push(base2);
+        event.sender.send('extract:progress', { file: base2, done: 1 });
+      }
+    }
+
+    // Pass 2: audio files → PUPVideos\{tablename}\Movie\
+    if (audioEntries.length > 0 && pupvideosBase && vpxBaseName) {
+      const movieDir = fsPath.join(pupvideosBase, vpxBaseName, 'Movie');
+      fs.mkdirSync(movieDir, { recursive: true });
+      const extractor2 = await createExtractorFromFile({
+        filepath: archivePath,
+        targetPath: movieDir,
+        filenameTransform: (name) => name.replace(/\\/g, '/').split('/').pop(),
+      });
+      const extracted2 = extractor2.extract({ files: (h) => audioEntries.some(e => e.path === h.name) });
+      for (const f of extracted2.files) {
+        const base2 = f.fileHeader.name.replace(/\\/g, '/').split('/').pop();
+        results.audio.push(base2);
+        event.sender.send('extract:progress', { file: base2, done: 1 });
+      }
+    } else if (audioEntries.length > 0) {
+      audioEntries.forEach(e => results.skipped.push(e.base));
     }
   } else {
     const yauzl = require('yauzl');
@@ -402,9 +424,17 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
           if (!MEDIA_EXTS.has(ext2)) { zf.readEntry(); return; }
           const subfolder = getTargetSubfolder(base2, lower);
           if (!subfolder) { results.skipped.push(base2); zf.readEntry(); return; }
-          const destDir = fsPath.join(popmediaBase, subfolder);
+          let destDir, finalName;
+          if (subfolder === 'Audio' && pupvideosBase && vpxBaseName) {
+            destDir   = fsPath.join(pupvideosBase, vpxBaseName, 'Movie');
+            finalName = base2;
+          } else if (subfolder === 'Audio') {
+            results.skipped.push(base2); zf.readEntry(); return;
+          } else {
+            destDir   = fsPath.join(popmediaBase, subfolder);
+            finalName = shouldRename(subfolder, base2) ? vpxBaseName + '.' + base2.split('.').pop() : base2;
+          }
           fs.mkdirSync(destDir, { recursive: true });
-          const finalName = shouldRename(subfolder, base2) ? vpxBaseName + '.' + base2.split('.').pop() : base2;
           zf.openReadStream(entry, (err2, stream) => {
             if (err2) { zf.readEntry(); return; }
             const out = fs.createWriteStream(fsPath.join(destDir, finalName));
