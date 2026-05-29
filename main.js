@@ -382,32 +382,44 @@ ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath) => {
     loginWin.setMenu(null);
 
     let captured = false;
+    // Save session reference now — loginWin.webContents is destroyed by the time 'closed' fires
+    const sess = romSession();
 
-    // Intercept any file download that starts in this window
-    romSession().once('will-download', (e, item) => {
+    const knownExts = /\.(vpx|directb2s|zip|rar|png|jpg|jpeg|apng|mp4|f4v|mkv|mp3|wav|dif)$/i;
+    const onWillDownload = (e, item) => {
+      const name = item.getFilename() || '';
+      const total = item.getTotalBytes();
+      const isRealFile = knownExts.test(name) || total > 10240 || total === 0;
+      if (!isRealFile) { item.cancel(); return; }
       captured = true;
-      // Use the site's real filename, saved into the staging folder
-      const stagingDir = destPath ? destPath.replace(/[\\/][^\\/]+$/, '') : fsPath.dirname(destPath);
-      const realName = item.getFilename() || fsPath.basename(destPath);
-      item.setSavePath(fsPath.join(stagingDir, realName));
-      item.on('updated', (e, state) => {
+      sess.removeListener('will-download', onWillDownload);
+      const stagingDir = destPath ? fsPath.dirname(destPath) : fsPath.join(require('os').homedir(), 'Downloads');
+      // Prefer the VPS-derived filename over the CDN URL filename —
+      // ROM zips need exact names that VPinMAME looks for.
+      const realName = (destPath ? fsPath.basename(destPath) : null) || name || 'download.zip';
+      const saveTo = fsPath.join(stagingDir, realName);
+      try { fs.mkdirSync(stagingDir, { recursive: true }); } catch(_) {}
+      item.setSavePath(saveTo);
+      item.on('updated', (_e, state) => {
         if (state === 'progressing') {
           const received = item.getReceivedBytes();
-          const total = item.getTotalBytes();
-          if (total > 0) event.sender.send('download:progress', { received, total });
+          const tot = item.getTotalBytes();
+          try { if (tot > 0) event.sender.send('download:progress', { received, total: tot }); } catch(_) {}
         }
       });
-      item.on('done', (e, state) => {
+      item.on('done', (_e, state) => {
         if (state === 'completed') {
-          resolve({ size: item.getReceivedBytes(), filename: item.getFilename() });
+          resolve({ size: item.getReceivedBytes(), filename: realName });
         } else {
           reject(new Error('Download ' + state));
         }
         if (!loginWin.isDestroyed()) loginWin.close();
       });
-    });
+    };
+    sess.on('will-download', onWillDownload);
 
     loginWin.on('closed', () => {
+      sess.removeListener('will-download', onWillDownload);
       if (!captured) resolve({ closed: true });
     });
 

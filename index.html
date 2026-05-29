@@ -5387,12 +5387,16 @@ function launchVpx(idx) {
 // ── Direct Electron download ──────────────────────────────────────────────────
 function guessDownloadFilename(url, type, tableName) {
   const knownExts = /\.(vpx|directb2s|zip|rar|png|jpg|jpeg|apng|mp4|f4v|mkv|mp3|wav|dif)$/i;
-  try {
-    const u = new URL(url);
-    const seg = decodeURIComponent(u.pathname.split('/').pop().split('?')[0]);
-    if (seg && knownExts.test(seg)) return seg;
-  } catch(e) {}
   const exts = { vpx: '.vpx', b2s: '.directb2s', rom: '.zip', wheel: '.png' };
+  // ROMs: always use VPS ROM name — URL often has abbreviated/wrong name,
+  // and VPinMAME requires the exact filename VPS lists.
+  if (type !== 'rom') {
+    try {
+      const u = new URL(url);
+      const seg = decodeURIComponent(u.pathname.split('/').pop().split('?')[0]);
+      if (seg && knownExts.test(seg)) return seg;
+    } catch(e) {}
+  }
   if (tableName) {
     const safe = tableName.replace(/[<>:"/\\|?*']/g, '').replace(/\s+/g, '_').slice(0, 60);
     return safe + (exts[type] || '');
@@ -6031,7 +6035,7 @@ function appendBatch(targetCount) {
     const popperIgnoreCname = popperReg === false ? compact((getInstalledFilename(t)||'').replace(/\.vpx$/i,'')) : '';
     const useDirectDl  = !!(window.electronAPI && electronPaths.staging);
     window.__tableLinks = window.__tableLinks || {};
-    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name, id: t.id };
+    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name, id: t.id, romName: vpsRomName || null };
     const noteData = getTableNote(t);
     const cr = communityRatings.get(t.id) || null;
     return `<div>
@@ -6060,7 +6064,7 @@ function appendBatch(targetCount) {
           ${useDirectDl
             ? `<button class="dl-btn vpx ${tableUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].vpx,'vpx',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">⬇ VPX</button>
                <button class="dl-btn b2s ${b2sUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].b2s,'b2s',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">🖼 B2S</button>
-               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download ROM — logs in automatically if needed">🎮 ROM</button>
+               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom',this,window.__tableLinks[${idx}]&&(window.__tableLinks[${idx}].romName||window.__tableLinks[${idx}].name),window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download ROM — logs in automatically if needed">🎮 ROM</button>
                <button class="dl-btn wheel ${wheelUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].wheel,'wheel',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">🎡 Wheel</button>
                <button id="dlAll_${idx}" class="dl-btn" style="background:#ffffff0a;color:#aaa;border:1px solid #ffffff22" onclick="downloadAllMissing(${idx});event.stopPropagation()" title="Download all available files to staging">⬇ All</button>`
             : `<a href="${tableUrl||'#'}" class="dl-btn vpx ${tableUrl?'':'off'}" ${tableUrl?'target="_blank"':''} onclick="event.stopPropagation()">⬇ VPX</a>
@@ -6102,7 +6106,7 @@ function appendBatch(targetCount) {
                   romLine = `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — compatible version installed (may work)</div>`;
                 } else if (romUrl) {
                   romLine = useDirectDl
-                    ? `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <button onclick="event.stopPropagation();downloadToStaging('${romUrl}','rom',this)" style="background:none;border:none;color:#f5a623;text-decoration:underline;cursor:pointer;font-size:10px;padding:0">download</button></div>`
+                    ? `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <button onclick="event.stopPropagation();downloadToStaging('${romUrl}','rom',this,'${vpsRomName}')" style="background:none;border:none;color:#f5a623;text-decoration:underline;cursor:pointer;font-size:10px;padding:0">download</button></div>`
                     : `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <a href="${romUrl}" target="_blank" style="color:#f5a623;text-decoration:underline" onclick="event.stopPropagation()">download</a></div>`;
                 } else {
                   romLine = `<div style="font-size:10px;color:#555;margin-top:3px">ROM: ${vpsRomName}.zip — not installed</div>`;
