@@ -1,31 +1,118 @@
 {
-  "updated": "2026-05-27",
-  "version": 1,
-  "note": "VPS table IDs can be found in the VPS database JSON (each table has an 'id' field). Open the .json, search for the table name, copy its id value.",
+  "updated": "2026-05-29",
+  "version": 2,
   "categories": [
     {
       "id": "vpw_picks",
       "label": "⭐ VPW Best Of",
-      "description": "Hand-picked top tables from VPinWorkshop creators",
-      "ids": []
+      "description": "Top recreations from VPinWorkshop creators — Williams & Bally golden age at its finest",
+      "ids": [
+        "-5yMpqSy",
+        "9Paf7-CL",
+        "F1Skyh5h",
+        "amqQVZGq",
+        "Tc_1PRrM",
+        "WMwkA7_p",
+        "AV8W-O2R",
+        "lkSumsrF",
+        "LJRH3fKk",
+        "O1-qbuxg",
+        "3CvHz8Fa",
+        "bzDWLumS",
+        "LMK5EL-k",
+        "EC_7xF96",
+        "vZDUDUii",
+        "aGzQHF72",
+        "sx604oSu",
+        "2HPDN_tT",
+        "JcJtmz2q",
+        "tV1GotAP",
+        "0wPuijKc",
+        "-SbeVjPA",
+        "vT78ph4O",
+        "OiRcNWYu",
+        "my2RZ_v_",
+        "fXaQ33KC",
+        "eKpfZo80"
+      ]
     },
     {
       "id": "community_favs",
       "label": "🏆 Community Picks",
-      "description": "Highly rated by the PinballMagic community",
-      "ids": []
+      "description": "The tables every virtual pinball cabinet must have",
+      "ids": [
+        "aT_GONvw",
+        "-5yMpqSy",
+        "WMwkA7_p",
+        "9Paf7-CL",
+        "Tc_1PRrM",
+        "F1Skyh5h",
+        "eKpfZo80",
+        "BunvWvh9",
+        "i47o-Nvr",
+        "MKZNH4Rl",
+        "GXsgeoz_",
+        "dhgyex0l",
+        "amqQVZGq",
+        "lkSumsrF",
+        "OiRcNWYu",
+        "fXaQ33KC",
+        "my2RZ_v_",
+        "nKd3MiUo",
+        "EC_7xF96",
+        "vZDUDUii",
+        "bzDWLumS",
+        "3CvHz8Fa",
+        "aGzQHF72",
+        "LMK5EL-k",
+        "JcJtmz2q",
+        "tV1GotAP",
+        "LJRH3fKk",
+        "AV8W-O2R",
+        "-SbeVjPA",
+        "O1-qbuxg"
+      ]
     },
     {
       "id": "hot_now",
-      "label": "🔥 Hot Right Now",
-      "description": "Recently updated tables worth grabbing",
-      "ids": []
+      "label": "🔥 Modern Favorites",
+      "description": "Stern, Jersey Jack and premium modern recreations",
+      "ids": [
+        "SE4QBZ9_qI",
+        "ZhNnPRvbTS",
+        "K3qwGUCAYu",
+        "n7uv_bjw",
+        "akYNyhNO",
+        "W_p2sxKM",
+        "oQwWzztd",
+        "_DvTQf1O",
+        "WWMoRxq4",
+        "M7FYR1GJ",
+        "3LNcE1yH",
+        "QaXyjXzr",
+        "nKd3MiUo",
+        "sx604oSu"
+      ]
     },
     {
       "id": "em_classics",
       "label": "🎰 EM Classics",
-      "description": "Essential electro-mechanical tables",
-      "ids": []
+      "description": "Essential electro-mechanical tables from the golden age of pinball",
+      "ids": [
+        "2v0eTaJ5",
+        "-y7tj2TZ",
+        "fz-KTflv",
+        "ekFqtEr5",
+        "OuKHyFyE",
+        "025ojqP4",
+        "qk6wFyrM",
+        "EoB4gz82",
+        "GsTo4kGh",
+        "q0RmE-GZ",
+        "qoSWmS2e",
+        "3LNcE1yH",
+        "QaXyjXzr"
+      ]
     }
   ]
 }
