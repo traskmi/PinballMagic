@@ -1,6 +1,6 @@
 {
   "name": "pinballmagic",
-  "version": "1.0.0",
+  "version": "2.55.0",
   "description": "Virtual pinball cabinet management tool",
   "author": "PinballMagic",
   "main": "main.js",
