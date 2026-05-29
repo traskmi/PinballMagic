@@ -109,17 +109,16 @@ Insert a new block immediately after `<h2>🎰 Changelog</h2>`:
 
 **5. Stage and commit all changed files**
 ```powershell
-$git = "C:\Users\Pinball 2\AppData\Local\GitHubDesktop\app-3.5.11\resources\app\git\cmd\git.exe"
 Set-Location "C:\vpinball\pinballmagic"
-& $git add index.html main.js preload.js package.json
-& $git commit -m "bump package.json to X.Y.Z"
-& $git push origin main
+git add index.html main.js preload.js package.json
+git commit -m "bump package.json to X.Y.Z"
+git push origin main
 ```
 
 **6. Create and push the version tag** ← this is what triggers the build
 ```powershell
-& $git tag vX.Y.Z
-& $git push origin vX.Y.Z
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 ### What happens next
@@ -127,11 +126,6 @@ Set-Location "C:\vpinball\pinballmagic"
 - Runs `npm run build` on `windows-latest` → produces NSIS installer + portable `.exe` in `dist/`
 - Creates a GitHub Release named `PinballMagic vX.Y.Z` with the `.exe` files attached
 - Monitor at: `https://github.com/traskmi/PinballMagic/actions`
-
-### Git is NOT in PATH — always use the full path:
-```
-C:\Users\Pinball 2\AppData\Local\GitHubDesktop\app-3.5.11\resources\app\git\cmd\git.exe
-```
 
 ### Common mistakes
 - Pushing a commit without the tag → build does NOT trigger
