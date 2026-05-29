@@ -351,7 +351,11 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
       if (!p.startsWith('medias/') || h.flags.directory) continue;
       const base = h.name.replace(/\\/g, '/').split('/').pop();
       const ext2 = '.' + base.split('.').pop().toLowerCase();
-      if (MEDIA_EXTS.has(ext2)) entries.push({ path: h.name, base });
+      if (MEDIA_EXTS.has(ext2)) {
+        const sf = getTargetSubfolder(base);
+        if (sf) entries.push({ path: h.name, base });
+        else results.skipped.push(base);
+      }
     }
     if (!entries.length) return results;
     // Extract matching entries
@@ -361,7 +365,7 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
       filenameTransform: (name) => {
         const base2 = name.replace(/\\/g, '/').split('/').pop();
         const subfolder = getTargetSubfolder(base2);
-        if (!subfolder) return null;
+        if (!subfolder) return base2; // safety net — pre-filter means this shouldn't be reached
         const destDir = fsPath.join(popmediaBase, subfolder);
         fs.mkdirSync(destDir, { recursive: true });
         const finalName = shouldRename(subfolder, base2)

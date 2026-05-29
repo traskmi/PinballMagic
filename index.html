@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.61.0</div>
+  <div class="version" onclick="showChangelog()">v2.62.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.62.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🐛 extractArchiveMedias RAR crash — files in the medias/ folder with no keyword match (not Wheel/BackGlass/DMD/Topper/PlayField) were passed to filenameTransform which returned null; node-unrar-js then crashed with ERR_INVALID_ARG_TYPE "path must be string, received null"; fix: pre-filter entries to only include keyword-matched files so filenameTransform is never called with an unrecognised file; unmatched files go to results.skipped instead</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.61.0<span class="cl-date">2026-05-29</span></div>
