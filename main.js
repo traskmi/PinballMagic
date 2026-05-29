@@ -179,18 +179,26 @@ ipcMain.handle('fs:listZip', async (event, p) => {
 });
 
 // Extract ZIP entries matching filter extensions into destDir (flat — no subdirs preserved)
+// options: { rootOnly: bool, pathPrefix: string } — rootOnly skips entries in subdirs;
+// pathPrefix only includes entries under that subfolder path
 // Returns array of { name, size } for each file written
-ipcMain.handle('fs:extractZipFlat', async (event, zipPath, destDir, filterExts) => {
+ipcMain.handle('fs:extractZipFlat', async (event, zipPath, destDir, filterExts, options = {}) => {
   const yauzl = require('yauzl');
   const exts = filterExts ? new Set(filterExts.map(e => e.toLowerCase())) : null;
+  const prefix = options.pathPrefix ? options.pathPrefix.toLowerCase().replace(/\/?$/, '/') : null;
+  const rootOnly = !!options.rootOnly;
   return new Promise((resolve, reject) => {
     yauzl.open(zipPath, { lazyEntries: true }, (err, zf) => {
       if (err) { reject(err); return; }
       const results = [];
       zf.readEntry();
       zf.on('entry', entry => {
-        const base = entry.fileName.split('/').pop();
+        const parts = entry.fileName.replace(/\\/g, '/').split('/');
+        const base = parts[parts.length - 1];
         if (!base) { zf.readEntry(); return; }
+        const entryPath = entry.fileName.replace(/\\/g, '/').toLowerCase();
+        if (prefix && !entryPath.startsWith(prefix)) { zf.readEntry(); return; }
+        if (rootOnly && parts.length > 1) { zf.readEntry(); return; }
         const lower = base.toLowerCase();
         const ext = lower.includes('.') ? '.' + lower.split('.').pop() : '';
         if (exts && !exts.has(ext)) { zf.readEntry(); return; }
@@ -268,11 +276,14 @@ ipcMain.handle('fs:listRar', async (event, p) => {
 });
 
 // Extract RAR entries matching filter extensions into destDir (flat — no subdirs preserved)
+// options: { rootOnly: bool, pathPrefix: string }
 // Returns array of { name, size } for each file written
-ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts) => {
+ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts, options = {}) => {
   try {
     const { createExtractorFromFile } = require('node-unrar-js');
     const exts = filterExts ? new Set(filterExts.map(e => e.toLowerCase())) : null;
+    const prefix = options.pathPrefix ? options.pathPrefix.toLowerCase().replace(/\/?$/, '/') : null;
+    const rootOnly = !!options.rootOnly;
     fs.mkdirSync(destDir, { recursive: true });
     const extractor = await createExtractorFromFile({
       filepath: rarPath,
@@ -282,8 +293,12 @@ ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts) 
     const extracted = extractor.extract({
       files: (header) => {
         if (header.flags.directory) return false;
-        const base = header.name.replace(/\\/g, '/').split('/').pop();
+        const parts = header.name.replace(/\\/g, '/').split('/');
+        const base = parts[parts.length - 1];
         if (!base) return false;
+        const entryPath = header.name.replace(/\\/g, '/').toLowerCase();
+        if (prefix && !entryPath.startsWith(prefix)) return false;
+        if (rootOnly && parts.length > 1) return false;
         if (!exts) return true;
         const lower = base.toLowerCase();
         const ext = lower.includes('.') ? '.' + lower.split('.').pop() : '';
@@ -298,6 +313,108 @@ ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts) 
     }
     return results;
   } catch(e) { return null; }
+});
+
+// Route files from a 'medias/' subfolder inside a table archive to the correct POPMedia folders.
+// Keyword routing: Wheel→Wheel/, backglass→BackGlass/, DMD→DMD/, Topper→Topper/, Playfield→PlayField/
+// vpxBaseName: if provided, wheel/backglass images are renamed to match the VPX file.
+// Returns { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], skipped:[] }
+ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBase, vpxBaseName) => {
+  const isRar = /\.rar$/i.test(archivePath);
+  const MEDIA_EXTS = new Set(['.png','.jpg','.jpeg','.apng','.gif','.mp4','.f4v','.mkv','.mp3','.wav']);
+  const results = { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], skipped:[] };
+
+  function getTargetSubfolder(filename) {
+    const f = filename.toLowerCase();
+    if (/wheel/i.test(f))                          return 'Wheel';
+    if (/backglass|back_glass|back glass/i.test(f)) return 'BackGlass';
+    if (/\bdmd\b/i.test(f))                        return 'DMD';
+    if (/topper/i.test(f))                         return 'Topper';
+    if (/playfield|play_field|play field/i.test(f)) return 'PlayField';
+    if (/\.(mp4|f4v|mkv)$/i.test(f))               return 'PlayField'; // unlabelled video → playfield
+    return null;
+  }
+
+  function shouldRename(subfolder, filename) {
+    return vpxBaseName && (subfolder === 'Wheel' || subfolder === 'BackGlass') &&
+           /\.(png|jpg|jpeg|apng|gif)$/i.test(filename);
+  }
+
+  // Build list of media entries to process
+  let entries = [];
+  if (isRar) {
+    const { createExtractorFromFile } = require('node-unrar-js');
+    const ext = await createExtractorFromFile({ filepath: archivePath, targetPath: popmediaBase });
+    const list = ext.getFileList();
+    for (const h of list.fileHeaders) {
+      const p = h.name.replace(/\\/g, '/').toLowerCase();
+      if (!p.startsWith('medias/') || h.flags.directory) continue;
+      const base = h.name.replace(/\\/g, '/').split('/').pop();
+      const ext2 = '.' + base.split('.').pop().toLowerCase();
+      if (MEDIA_EXTS.has(ext2)) entries.push({ path: h.name, base });
+    }
+    if (!entries.length) return results;
+    // Extract matching entries
+    const extractor = await createExtractorFromFile({
+      filepath: archivePath,
+      targetPath: popmediaBase,
+      filenameTransform: (name) => {
+        const base2 = name.replace(/\\/g, '/').split('/').pop();
+        const subfolder = getTargetSubfolder(base2);
+        if (!subfolder) return null;
+        const destDir = fsPath.join(popmediaBase, subfolder);
+        fs.mkdirSync(destDir, { recursive: true });
+        const finalName = shouldRename(subfolder, base2)
+          ? vpxBaseName + '.' + base2.split('.').pop()
+          : base2;
+        return fsPath.join(subfolder, finalName);
+      },
+    });
+    const extracted = extractor.extract({ files: (h) => entries.some(e => e.path === h.name) });
+    for (const f of extracted.files) {
+      const base2 = f.fileHeader.name.replace(/\\/g, '/').split('/').pop();
+      const subfolder = getTargetSubfolder(base2);
+      if (subfolder) results[subfolder.toLowerCase().replace('backglass','backglass').toLowerCase()]?.push(base2) || results.skipped.push(base2);
+      event.sender.send('extract:progress', { file: base2, done: 1 });
+    }
+  } else {
+    const yauzl = require('yauzl');
+    await new Promise((resolve, reject) => {
+      yauzl.open(archivePath, { lazyEntries: true }, (err, zf) => {
+        if (err) { reject(err); return; }
+        zf.readEntry();
+        zf.on('entry', entry => {
+          const entryPath = entry.fileName.replace(/\\/g, '/');
+          const lower = entryPath.toLowerCase();
+          if (!lower.startsWith('medias/')) { zf.readEntry(); return; }
+          const base2 = entryPath.split('/').pop();
+          if (!base2) { zf.readEntry(); return; }
+          const ext2 = '.' + base2.split('.').pop().toLowerCase();
+          if (!MEDIA_EXTS.has(ext2)) { zf.readEntry(); return; }
+          const subfolder = getTargetSubfolder(base2);
+          if (!subfolder) { results.skipped.push(base2); zf.readEntry(); return; }
+          const destDir = fsPath.join(popmediaBase, subfolder);
+          fs.mkdirSync(destDir, { recursive: true });
+          const finalName = shouldRename(subfolder, base2) ? vpxBaseName + '.' + base2.split('.').pop() : base2;
+          zf.openReadStream(entry, (err2, stream) => {
+            if (err2) { zf.readEntry(); return; }
+            const out = fs.createWriteStream(fsPath.join(destDir, finalName));
+            stream.pipe(out);
+            out.on('finish', () => {
+              const key = subfolder.toLowerCase();
+              (results[key] || results.skipped).push(finalName);
+              event.sender.send('extract:progress', { file: finalName, done: 1 });
+              zf.readEntry();
+            });
+            out.on('error', () => zf.readEntry());
+          });
+        });
+        zf.on('end', resolve);
+        zf.on('error', reject);
+      });
+    });
+  }
+  return results;
 });
 
 // Extract all RAR entries into destDir preserving paths, stripping an optional top-level prefix
@@ -371,7 +488,7 @@ function romSession() { return session.fromPartition('persist:rom-sites'); }
 // If a file download starts inside the window (user clicks Download on the site),
 // it is intercepted and saved directly to destPath — the window closes automatically.
 // If the user closes the window without downloading, resolves with { closed: true }.
-ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath) => {
+ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath, fileType) => {
   return new Promise((resolve, reject) => {
     const loginWin = new BrowserWindow({
       width: 1100, height: 800,
@@ -394,9 +511,9 @@ ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath) => {
       captured = true;
       sess.removeListener('will-download', onWillDownload);
       const stagingDir = destPath ? fsPath.dirname(destPath) : fsPath.join(require('os').homedir(), 'Downloads');
-      // Prefer the VPS-derived filename over the CDN URL filename —
-      // ROM zips need exact names that VPinMAME looks for.
-      const realName = (destPath ? fsPath.basename(destPath) : null) || name || 'download.zip';
+      // For ROMs: use VPS-derived destPath filename (VPinMAME needs exact name).
+      // For everything else: use the actual server filename so RAR/ZIP/VPX is correct.
+      const realName = (fileType === 'rom' && destPath) ? fsPath.basename(destPath) : (name || fsPath.basename(destPath || 'download.zip'));
       const saveTo = fsPath.join(stagingDir, realName);
       try { fs.mkdirSync(stagingDir, { recursive: true }); } catch(_) {}
       item.setSavePath(saveTo);

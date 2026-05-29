@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.57.0</div>
+  <div class="version" onclick="showChangelog()">v2.58.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -391,6 +391,11 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="cl-entry">
       <div class="cl-version">v2.57.0<span class="cl-date">2026-05-29</span></div>
       <div class="cl-item">🔒 Privacy notice &amp; opt-out — a one-time banner on first launch explains anonymous download tracking; Settings → Privacy toggle opts out immediately; Help modal includes a full Data &amp; Privacy section covering what is collected, why, and how to opt out</div>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.58.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🐛 RAR extraction in Electron — table RARs (and backglass/altcolor/altsound RARs) now correctly use the native node-unrar-js IPC path instead of falling through to the CDN WASM browser path; root cause was getFile() on an Electron file handle not forwarding _electronPath to the returned File-like object, so item.file._electronPath was always undefined in executeInstall</div>
+      <div class="cl-item">🔇 Quieter scan log — per-file cVersion/cAuthor/cGameName debug lines removed from the scan; the scan-complete INFO summary (e.g. "Scan complete: 71 VPX file(s), 0 with binary version info") still appears and captures the useful aggregate</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.56.0<span class="cl-date">2026-05-29</span></div>
@@ -2227,7 +2232,6 @@ async function performScan(dirHandle) {
         cVersion:  tailMeta.cVersion  || frontMeta.cVersion,
         cAuthor:   tailMeta.cAuthor   || frontMeta.cAuthor,
       };
-      logDebug(`${handle.name}: cVersion=${fileMeta.cVersion ?? '—'} cAuthor=${fileMeta.cAuthor ?? '—'} cGameName=${fileMeta.cGameName ?? '—'}`);
     } catch(e) {
       logWarn(`Could not read binary from ${handle.name}: ${e.message}`);
     }
@@ -2310,7 +2314,7 @@ function makeElectronFileHandle(filePath) {
       const size = stat ? stat.size : 0;
       const lastModified = stat ? (stat.mtime || Date.now()) : Date.now();
       return {
-        name, size, lastModified,
+        name, size, lastModified, _electronPath: filePath,
         async arrayBuffer() {
           const b64 = await window.electronAPI.readFile(filePath);
           if (!b64) throw new Error('Could not read: ' + filePath);
@@ -2412,7 +2416,6 @@ async function performElectronScan() {
         cVersion:  tailMeta.cVersion  || frontMeta.cVersion  || null,
         cAuthor:   tailMeta.cAuthor   || frontMeta.cAuthor   || null,
       };
-      logDebug(`${name}: cVersion=${fileMeta.cVersion ?? '—'} cAuthor=${fileMeta.cAuthor ?? '—'} cGameName=${fileMeta.cGameName ?? '—'}`);
     } catch(e) { logWarn(`Could not read binary from ${name}: ${e.message}`); }
     meta.push(fileMeta);
   }
@@ -3126,9 +3129,10 @@ async function extractArchiveBrowser(file) {
   });
 }
 
-function peekRar(file) {
-  if (window.electronAPI && file._electronPath) {
-    return window.electronAPI.listRar(file._electronPath).then(entries => {
+function peekRar(file, electronPath) {
+  const epath = electronPath || file._electronPath;
+  if (window.electronAPI && epath) {
+    return window.electronAPI.listRar(epath).then(entries => {
       if (!entries) return Promise.reject(new Error('Could not read RAR: ' + file.name));
       return buildPeekResult(entries, file.name, null);
     });
@@ -3347,7 +3351,7 @@ async function buildInstallPlan(fileHandles) {
     if (cls.dest === 'zip') {
       try {
         const isRarFile = /\.rar$/i.test(name);
-        const peek = await (isRarFile ? peekRar(file) : peekZip(file));
+        const peek = await (isRarFile ? peekRar(file, filePath) : peekZip(file));
         const zipType = peek.isTableZip ? 'tableZIP' : peek.isBackglassZip ? 'backglassZIP' : peek.isPovZip ? 'povZIP' : peek.isVpuRemix ? 'vpuRemix' : peek.isAltColor ? 'altColor' : peek.isAltSound ? 'altSound' : peek.isPuPContent ? (peek.isPuPPatch ? 'puPPatch' : 'puPPack') : peek.isVideoMedia ? `videoMedia(→${peek.videoMediaTargetFolder})` : peek.isFuturePinball ? 'FuturePinball' : 'ROM';
         logDebug(`peek${isRarFile ? 'Rar' : 'Zip'}: ${name} → ${zipType}${peek.gameName ? ` (cGameName=${peek.gameName})` : ''}${peek.romFolderName ? ` (folder=${peek.romFolderName})` : ''}${peek.pupTargetFolder ? ` (pup→${peek.pupTargetFolder})` : ''}`);
         if (peek.isTableZip) {
@@ -4140,11 +4144,13 @@ async function executeInstall(plan) {
           for (const r of tableRes) { moved.tables.push(r.name); logInfo(`Copied: ${r.name} → Tables\\ (${(r.size/1048576).toFixed(1)} MB)`); }
           const romRes = await window.electronAPI[flatFn](zipPath, electronPaths.roms, ['.zip']);
           if (romRes) for (const r of romRes) { moved.roms.push(r.name); logInfo(`Copied: ${r.name} → ROMs\\ (${(r.size/1048576).toFixed(1)} MB)`); }
+          const vpxEntry = item.entries && item.entries.find(e => e.toLowerCase().endsWith('.vpx'));
+          const vpxBaseName = vpxEntry ? vpxEntry.split('/').pop().replace(/\.vpx$/i, '') : null;
+          const hasMediasFolder = item.entries && item.entries.some(e => e.toLowerCase().startsWith('medias/'));
           const wDir = await getMediaDir('Wheel');
           if (wDir && wDir._electronPath) {
-            const vpxEntry = item.entries && item.entries.find(e => e.toLowerCase().endsWith('.vpx'));
-            const vpxBaseName = vpxEntry ? vpxEntry.split('/').pop().replace(/\.vpx$/i, '') : null;
-            const imgRes = await window.electronAPI[flatFn](zipPath, wDir._electronPath, ['.png', '.jpg', '.jpeg', '.apng']);
+            // rootOnly: skip images inside medias/ subfolder — those are routed separately below
+            const imgRes = await window.electronAPI[flatFn](zipPath, wDir._electronPath, ['.png', '.jpg', '.jpeg', '.apng'], { rootOnly: true });
             if (imgRes) for (const r of imgRes) {
               const ext = r.name.match(/\.[^.]+$/)?.[0] || '.png';
               const wName = vpxBaseName ? vpxBaseName + ext : r.name;
@@ -4154,6 +4160,18 @@ async function executeInstall(plan) {
                 logInfo(`Copied + renamed: ${r.name} → Wheel\\${wName}`);
               } else { logInfo(`Copied: ${r.name} → Wheel\\`); }
               moved.wheel.push(wName);
+            }
+          }
+          // Route medias/ subfolder → POPMedia (Wheel, BackGlass, DMD, Topper, PlayField)
+          if (hasMediasFolder && electronPaths.popmedia) {
+            logInfo(`Routing medias/ subfolder from ${item.name}…`);
+            const mediaRes = await window.electronAPI.extractArchiveMedias(zipPath, electronPaths.popmedia, vpxBaseName);
+            if (mediaRes) {
+              if (mediaRes.wheel?.length)     { moved.wheel.push(...mediaRes.wheel);         mediaRes.wheel.forEach(f => logInfo(`Media: ${f} → POPMedia\\Wheel\\`)); }
+              if (mediaRes.backglass?.length) { moved.backglass.push(...mediaRes.backglass); mediaRes.backglass.forEach(f => logInfo(`Media: ${f} → POPMedia\\BackGlass\\`)); }
+              if (mediaRes.dmd?.length)       { moved.dmd.push(...mediaRes.dmd);             mediaRes.dmd.forEach(f => logInfo(`Media: ${f} → POPMedia\\DMD\\`)); }
+              if (mediaRes.topper?.length)    { moved.topper.push(...mediaRes.topper);       mediaRes.topper.forEach(f => logInfo(`Media: ${f} → POPMedia\\Topper\\`)); }
+              if (mediaRes.playfield?.length) { moved.playfield.push(...mediaRes.playfield); mediaRes.playfield.forEach(f => logInfo(`Media: ${f} → POPMedia\\PlayField\\`)); }
             }
           }
           moved.zips.push(item.name);
@@ -5444,7 +5462,7 @@ async function downloadToStaging(url, type, btn, tableName, vpsId) {
     if (btn) { btn.innerHTML = '🔑'; btn.style.opacity = '1'; btn.disabled = true; }
     if (msEl) msEl.textContent = `🔑 Opening download window for ${hostname} — log in if prompted, then click Download…`;
     logInfo(`Opening download window for ${url} → ${dest}`);
-    const result = await window.electronAPI.openDownloadWindow(url, dest);
+    const result = await window.electronAPI.openDownloadWindow(url, dest, type);
     if (result && result.size) {
       logInfo(`Captured via download window: ${result.filename || name}`);
       setBtnDone();
