@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.65.0</div>
+  <div class="version" onclick="showChangelog()">v2.66.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.66.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🔥 Per-table download counts — each table row shows an orange 🔥 N badge when it has download activity in the last 30 days; the detail panel Community section shows "🔥 N downloads (30d)" alongside the star rating; hot data query bumped from top 50 to top 200 so more tables show counts; counts update hourly from Supabase alongside the Hot Right Now sort</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.65.0<span class="cl-date">2026-05-29</span></div>
@@ -1611,7 +1615,7 @@ async function loadHotFromSupabase() {
     }
   } catch(_) {}
   try {
-    const rows = await sbFetch('/hot_tables_30d?select=vps_id,unique_users&order=unique_users.desc&limit=50');
+    const rows = await sbFetch('/hot_tables_30d?select=vps_id,unique_users&order=unique_users.desc&limit=200');
     if (!rows || !rows.length) return;
     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ rows, ts: Date.now() })); } catch(_) {}
     _applyHotData(rows);
@@ -6111,6 +6115,7 @@ function appendBatch(targetCount) {
     window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name, id: t.id, romName: vpsRomName || null };
     const noteData = getTableNote(t);
     const cr = communityRatings.get(t.id) || null;
+    const dlCount = hotDownloadCounts.get(t.id) || 0;
     return `<div>
       <div class="table-row ${inst?'is-installed':''}" onclick="toggleDetail(${idx})">
         ${thumb}
@@ -6130,6 +6135,7 @@ function appendBatch(targetCount) {
           ${popperReg===false?`<span class="badge popper-warn" style="display:inline-flex;align-items:center;gap:3px" title="Not registered in PinUp Popper — use Install Files to add">⚠ not in Popper<button onclick="ignorePopperTable('${popperIgnoreCname}');event.stopPropagation()" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:11px;opacity:.7" title="Suppress this badge for this table">×</button></span>`:''}
           ${(()=>{ const df=getDuplicateFiles(t); return df?`<span class="badge dup-warn" title="${df.length} VPX files match this table — expand to clean up">⚠ ${df.length} vpx</span>`:''; })()}
           ${cr?`<span class="badge" style="color:#9c93ff;background:#6c63ff11;border:1px solid #6c63ff33" title="Community: ${cr.avg}★ avg (${cr.count} rating${cr.count!==1?'s':''})">★ ${cr.avg}</span>`:''}
+          ${dlCount?`<span class="badge" style="color:#ff9966;background:#ff996611;border:1px solid #ff996633" title="${dlCount} unique user${dlCount!==1?'s':''} downloaded this in the last 30 days">🔥 ${dlCount}</span>`:''}
           ${noteData.stars?`<span id="notebadge_${idx}" class="badge" style="color:#f5a623;background:#f5a62311;border:1px solid #f5a62333" title="${noteData.stars} star${noteData.stars!==1?'s':''}">${'★'.repeat(noteData.stars)}</span>`:`<span id="notebadge_${idx}" style="display:none" class="badge" style="color:#f5a623;background:#f5a62311;border:1px solid #f5a62333"></span>`}
           ${noteData.note?`<span id="notebadge_note_${idx}" class="badge" style="color:#888;background:#ffffff08;border:1px solid #ffffff15" title="${noteData.note.replace(/"/g,'&quot;').slice(0,80)}">📝</span>`:`<span id="notebadge_note_${idx}" style="display:none" class="badge" style="color:#888"></span>`}
         </div>
@@ -6221,10 +6227,14 @@ function appendBatch(targetCount) {
         ${(() => {
           const cr2 = communityRatings.get(t.id) || null;
           const myS = myRatings.get(t.id) || 0;
+          const dlCount2 = hotDownloadCounts.get(t.id) || 0;
           return `<div style="margin-top:14px;border-top:1px solid #2a2a3a;padding-top:12px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
               <div class="detail-title" style="margin-bottom:0">Community</div>
-              ${cr2?`<span id="cavg_${idx}" style="font-size:12px;color:#9c93ff">★ ${cr2.avg} avg · ${cr2.count} rating${cr2.count!==1?'s':''}</span>`:`<span id="cavg_${idx}" style="font-size:11px;color:#444">No ratings yet</span>`}
+              <div style="display:flex;gap:10px;align-items:center">
+                ${dlCount2?`<span style="font-size:12px;color:#ff9966" title="${dlCount2} unique user${dlCount2!==1?'s':''} downloaded this in the last 30 days">🔥 ${dlCount2} download${dlCount2!==1?'s':''} <span style="color:#555;font-size:11px">(30d)</span></span>`:''}
+                ${cr2?`<span id="cavg_${idx}" style="font-size:12px;color:#9c93ff">★ ${cr2.avg} avg · ${cr2.count} rating${cr2.count!==1?'s':''}</span>`:`<span id="cavg_${idx}" style="font-size:11px;color:#444">No ratings yet</span>`}
+              </div>
             </div>
             <div style="margin-bottom:12px">
               <div style="font-size:11px;color:#555;margin-bottom:5px">Rate this table:</div>
