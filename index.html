@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.66.0</div>
+  <div class="version" onclick="showChangelog()">v2.67.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.67.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🤖 Auto-click download button in download window — when the download window opens and the user is already logged in, the app now automatically clicks the "Download This File" button (IPS/VPUniverse selector patterns) so the download starts without any user interaction; window still stays open if login is required or if no button is found, so manual flow is unchanged for first-time auth</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.66.0<span class="cl-date">2026-05-29</span></div>

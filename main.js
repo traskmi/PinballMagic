@@ -574,6 +574,29 @@ ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath, fileType)
     };
     sess.on('will-download', onWillDownload);
 
+    // Auto-click the download button once the page loads (if already logged in)
+    loginWin.webContents.on('did-finish-load', async () => {
+      if (captured) return;
+      try {
+        await loginWin.webContents.executeJavaScript(`
+          (function() {
+            const selectors = [
+              'a[href*="?do=download"]',
+              'a[href*="&do=download"]',
+              '[data-ips-hook="download"] a',
+              'a.ipsButton_primary[href*="download"]',
+              'a[href*="/download"][class*="ips"]',
+            ];
+            for (const sel of selectors) {
+              const el = document.querySelector(sel);
+              if (el && el.href) { el.click(); return true; }
+            }
+            return false;
+          })()
+        `);
+      } catch(_) {}
+    });
+
     loginWin.on('closed', () => {
       sess.removeListener('will-download', onWillDownload);
       if (!captured) resolve({ closed: true });
