@@ -1117,6 +1117,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="stat clickable" id="tileDuplicates" onclick="setFilter('duplicates')" title="Show tables with multiple VPX files — expand to delete extras" style="color:#ff9966;display:none"><div class="stat-label">Duplicate VPX</div><div class="stat-value" style="color:#ff9966" id="statDuplicates">—</div></div>
     <div class="stat clickable" id="tileRecent" onclick="setFilter('recent')" title="Show tables updated in VPS in the last 90 days" style="color:#88ffcc"><div class="stat-label">Recently Updated</div><div class="stat-value" style="color:#88ffcc" id="statRecent">—</div></div>
     <div class="stat clickable" id="tileVpw" onclick="setFilter('vpw')" title="Show Best Of — tables by top VPW creators (fuzzel, bord, jpsalas, hauntfreaks, nfozzy, fleep, rothbauerw, flupper…)" style="color:#d4af37;display:none"><div class="stat-label">⭐ Best Of (VPW)</div><div class="stat-value" style="color:#d4af37" id="statVpw">—</div></div>
+    <div class="stat clickable" id="tileHot" onclick="setSort('featured_hot_now')" title="Most downloaded by PinballMagic users in the last 30 days" style="color:#ff6b35;display:none"><div class="stat-label">🔥 Hot Right Now</div><div class="stat-value" style="color:#ff6b35" id="statHot">—</div></div>
     <div class="stat" id="tileShowing"><div class="stat-label">Showing</div><div class="stat-value white" id="statShowing">—</div></div>
   </div>
   <div class="load-section" id="loadSection">
@@ -1603,7 +1604,14 @@ function _applyHotData(rows) {
     featuredSets.set('hot_now', new Set(ids));
   }
   _injectFeaturedSortOptions();
+  // Show the Hot tile with the count of tracked tables
+  const tile = document.getElementById('tileHot');
+  const stat = document.getElementById('statHot');
+  if (tile && ids.length > 0) { tile.style.display = ''; }
+  if (stat && ids.length > 0) { stat.textContent = ids.length; }
 }
+
+function setSort(mode) { setSortMode(mode); const s = document.getElementById('sortSelect'); if (s) s.value = mode; }
 
 function _injectFeaturedSortOptions() {
   const sel = document.getElementById('sortSelect');
