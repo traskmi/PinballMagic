@@ -66,7 +66,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .table-grid { display: flex; flex-direction: column; gap: 6px; }
 .table-row { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 80px 1fr auto auto; gap: 16px; align-items: center; transition: border-color 0.15s; cursor: pointer; }
 .thumb { width: 80px; height: 60px; border-radius: 6px; object-fit: cover; object-position: top; background: #0f0f13; display: block; flex-shrink: 0; }
-.detail-img { width: 100%; max-height: 220px; object-fit: cover; object-position: top; border-radius: 8px; margin-bottom: 14px; display: block; }
+.thumb-placeholder { background: linear-gradient(135deg, #12121e 0%, #1e1e32 100%); display: flex; align-items: center; justify-content: center; padding: 5px; text-align: center; font-size: 9px; font-weight: 600; color: #555; letter-spacing: 0.04em; line-height: 1.35; word-break: break-word; overflow: hidden; }
+.detail-img { width: 100%; max-height: 220px; object-fit: contain; background: #0a0a14; border-radius: 8px; margin-bottom: 14px; display: block; }
 .table-row:hover { border-color: #3a3a4a; }
 .table-row.is-installed { border-left: 3px solid #3ecfcf; }
 .table-name { font-size: 14px; font-weight: 500; color: #e0e0e0; }
@@ -105,9 +106,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
 .settings-toggle input:checked + .slider:before { transform: translateX(16px); }
 .badges { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
-.badge.installed { background: #3ecfcf22; color: #3ecfcf; border: 1px solid #3ecfcf44; }
+.badge.installed { background: #6c63ff22; color: #9c93ff; border: 1px solid #6c63ff44; }
 .badge.missing { background: #f5a62322; color: #f5a623; border: 1px solid #f5a62344; }
-.badge.has-b2s { background: #6c63ff22; color: #9c93ff; border: 1px solid #6c63ff44; }
+.badge.has-b2s { background: #ffffff08; color: #666; border: 1px solid #ffffff18; }
+.badge.wheel-ok { background: #e040fb22; color: #e040fb; border: 1px solid #e040fb44; }
 .badge.b2s-ok { background: #3ecfcf22; color: #3ecfcf; border: 1px solid #3ecfcf44; }
 .badge.pov-ok { background: #3ecfcf22; color: #3ecfcf; border: 1px solid #3ecfcf44; }
 .badge.media-warn { background: #ff444422; color: #ff7070; border: 1px solid #ff444444; }
@@ -119,10 +121,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
 .setup-btn { padding:4px 12px; border-radius:99px; font-size:11px; font-weight:500; cursor:pointer; border:1px solid #2a2a3a; background:#0f0f13; color:#666; transition:all 0.15s; }
 .setup-btn:hover { border-color:#3a3a4a; color:#999; }
 .setup-btn.active { background:#6c63ff22; border-color:#6c63ff88; color:#9c93ff; }
-.badge.has-rom { background: #ffffff11; color: #888; border: 1px solid #ffffff22; }
-.badge.rom-ok { background: #3ecfcf22; color: #3ecfcf; border: 1px solid #3ecfcf44; }
+.badge.has-rom { background: #ffffff08; color: #666; border: 1px solid #ffffff18; }
+.badge.rom-ok { background: #f5a62322; color: #f5a623; border: 1px solid #f5a62344; }
 .badge.rom-compat { background: #f5a62322; color: #f5a623; border: 1px solid #f5a62344; }
-.badge.has-wheel { background: #3ecfcf11; color: #3ecfcf88; border: 1px solid #3ecfcf22; }
+.badge.has-wheel { background: #ffffff08; color: #666; border: 1px solid #ffffff18; }
 .badge.update { background: #6c63ff22; color: #9c93ff; border: 1px solid #6c63ff44; cursor: pointer; }
 .dl-group { display: flex; gap: 6px; }
 .dl-btn { padding: 6px 12px; border-radius: 7px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-weight: 500; transition: opacity 0.2s; white-space: nowrap; }
@@ -130,7 +132,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
 .dl-btn.vpx { background: #6c63ff22; color: #9c93ff; border: 1px solid #6c63ff44; }
 .dl-btn.b2s { background: #3ecfcf22; color: #3ecfcf; border: 1px solid #3ecfcf44; }
 .dl-btn.rom { background: #f5a62322; color: #f5a623; border: 1px solid #f5a62344; }
-.dl-btn.wheel { background: #ffffff11; color: #888; border: 1px solid #ffffff22; }
+.dl-btn.wheel { background: #e040fb22; color: #e040fb; border: 1px solid #e040fb44; }
 .dl-btn.off { opacity: 0.2; pointer-events: none; }
 .empty { text-align: center; padding: 40px; color: #444; font-size: 14px; }
 .path-info { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
@@ -152,6 +154,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
 .version-list { display: flex; flex-direction: column; gap: 8px; }
 .version-item { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .version-item.installed { background: #0d1f1f; border-color: #2a6a5a; border-left: 3px solid #3ecfcf; }
+.version-item.search-match { background: #1a1820; border-color: #3a2a5a; border-left: 3px solid #6c63ff; }
 .version-info { font-size: 12px; color: #888; }
 .version-info strong { color: #ccc; font-size: 13px; }
 .version-item.installed .version-info { color: #aaa; }
@@ -196,7 +199,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.48.0</div>
+  <div class="version" onclick="showChangelog()">v2.55.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -207,6 +210,29 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div id="historyModalBody" style="min-height:60px"></div>
     <div style="margin-top:16px;text-align:right">
       <button onclick="clearInstallHistory()" style="padding:5px 12px;background:#2a2a3a;color:#666;border:1px solid #3a3a4a;border-radius:6px;font-size:12px;cursor:pointer">Clear all</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="feedbackModal" onclick="if(event.target===this)hideFeedbackModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h2>💬 Send Feedback</h2>
+      <button class="modal-close" onclick="hideFeedbackModal()">✕</button>
+    </div>
+    <div style="padding:4px 0 8px">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="fbTypeBug" onclick="setFeedbackType('bug')" class="btn-sm" style="flex:1">🐛 Bug Report</button>
+        <button id="fbTypeIdea" onclick="setFeedbackType('idea')" class="btn-sm" style="flex:1">💡 Idea</button>
+        <button id="fbTypeOther" onclick="setFeedbackType('other')" class="btn-sm" style="flex:1">💬 Other</button>
+      </div>
+      <textarea id="fbDescription" placeholder="Describe the issue or idea..." rows="5"
+        style="width:100%;box-sizing:border-box;background:#1a1a2a;border:1px solid #2a2a3a;border-radius:8px;color:#ccc;font-size:13px;padding:10px;resize:vertical;font-family:inherit"></textarea>
+      <input id="fbEmail" type="email" placeholder="Your email (optional — for follow-up)"
+        style="width:100%;box-sizing:border-box;margin-top:8px;background:#1a1a2a;border:1px solid #2a2a3a;border-radius:8px;color:#ccc;font-size:13px;padding:8px 10px;font-family:inherit">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+        <span id="fbStatus" style="font-size:12px;color:#666"></span>
+        <button onclick="submitFeedback()" class="btn-sm" style="background:#6c63ff22;color:#9c93ff;border-color:#6c63ff44;padding:7px 20px">Send →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -337,6 +363,41 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.55.0<span class="cl-date">2026-05-28</span></div>
+      <div class="cl-item">🔑 Embedded download window with automatic file capture — sites like VPinUniverse use multi-hop download flows (login → download page → countdown → file) that can't be automated with raw HTTP; when a download fails with an auth/HTML response the app opens a real Chromium window using the persistent ROM session (so the user is already logged in); the user clicks Download on the site; Electron intercepts the file via will-download and saves it directly to staging using the site's real filename; window closes automatically; session cookies persist across restarts so login is only needed once per site</div>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.54.0<span class="cl-date">2026-05-28</span></div>
+      <div class="cl-item">🔑 Unified site authentication for all download types — any download (VPX, B2S, ROM, Wheel) that fails with an auth error (HTML redirect, 401, 403) now opens an embedded login window using a persistent Electron session (cookies survive restarts); after login the download retries automatically with cookies injected; works for all gated sites (VPinUniverse etc.) not just ROMs; expired sessions are detected, cookies cleared, and re-login offered; non-auth failures still fall back to the browser</div>
+      <div class="cl-item">🐛 Unrecognized staging files (e.g. index.php from failed redirects) now appear in the Install Plan Skipped section with a 🗑 delete button instead of being silently ignored</div>
+      <div class="cl-item">🐛 Download content-type guard — server responses with text/html content type (login redirect pages) are now rejected before writing to disk, with a descriptive error instead of saving a corrupt HTML file</div>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.52.0<span class="cl-date">2026-05-28</span></div>
+      <div class="cl-item">🎨 Badge color system — each file type now has a consistent color end-to-end: VPX=purple, B2S=teal, ROM=orange, Wheel=magenta; available-but-not-installed badges are neutral gray; installed badges show the type color with a ✓; added ✓ wheel badge using local POPMedia scan; Wheel download button updated to magenta</div>
+      <div class="cl-item">🐛 Duplicate VPX false positive — tables sharing a compact base name across different manufacturers/years (e.g. Playboy Bally 1978 vs Stern 2002) no longer both appear in the Duplicate VPX filter; year extracted from raw filename is compared against the VPS table year to restrict each duplicate group to its actual owner</div>
+      <div class="cl-item">💬 Feedback type label — "Enhancement" button renamed to "Idea" to match the stored value in the feedback table</div>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.51.0<span class="cl-date">2026-05-28</span></div>
+      <div class="cl-item">💬 In-app feedback — 💬 Feedback button in toolbar opens a modal to submit bug reports, enhancement requests, or general feedback directly to the team; type selector (Bug / Enhancement / Other), description, optional email, app version auto-attached; posts to Supabase feedback table</div>
+      <div class="cl-item">⬇ Download All per version row — each version entry in the detail panel now has a ⬇ All button that downloads that author's VPX + the table's ROM + B2S + Wheel in one click; VPU patch rows also download the base table VPX and show a reminder that VPUPatcher64 is still required</div>
+      <div class="cl-item">⬇ Download All at table level — ⬇ All button on each table row downloads all available file types to staging sequentially; skips VPX versions that require VPU Patcher or original table and warns when skipped</div>
+      <div class="cl-item">💡 Download button feedback — all download buttons show ⏳ while in progress and ✓ for 3 seconds on completion; ROM inline link in version list now uses direct staging download in Electron mode instead of opening the browser</div>
+      <div class="cl-item">🐛 Download filename — files downloaded via direct Electron download now use the actual filename from the URL when available; falls back to TableName.ext (e.g. Attack_from_Mars.vpx) instead of download_timestamp.ext</div>
+      <div class="cl-item">🖼 Table thumbnails — detail panel image switched to object-fit: contain so wide/panoramic images show in full without cropping; local backglass or wheel art used as fallback when VPS has no image; text placeholder (table name) shown for tables with no image at all</div>
+      <div class="cl-item">🔍 Type filter — populated dynamically from VPS data so only types that actually exist appear; removes phantom "Original" option that returned zero results</div>
+      <div class="cl-item">💡 Ctrl+Shift+I — opens Electron DevTools when running via npm start; dev-only, disabled in packaged builds</div>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.50.0<span class="cl-date">2026-05-28</span></div>
+      <div class="cl-item">🔗 VPS changes jump-to-table — clicking a table link in the Database Changes modal now jumps by VPS ID (not name), so the exact table is found even when dozens share the same name; detail panel auto-expands and the most recently uploaded version entry is highlighted in amber; row flashes teal on arrival</div>
+      <div class="cl-item">🔍 Version list search highlight — when a search term matches an author in the version list, that row gets a purple left border and the matching text is highlighted; makes "VPW" or author searches immediately useful in the detail panel</div>
+      <div class="cl-item">🐛 DB Changes link onclick — double-quote in onclick attribute broke the jumpToTable call for all table names; fixed by switching onclick attribute to single-quote delimiters</div>
+      <div class="cl-item">💡 Ctrl+R dev reload — renderer hot-reload on Ctrl+R when running via npm start; disabled in packaged builds so cabinet users can't accidentally reload</div>
+      <div class="cl-item">⚠ VPU Patcher warnings in version list — version entries requiring VPUPatcher64 show an amber "Requires VPUPatcher64" link (opens vpuniverse.com download page) and a "Requires original table" link that scrolls to and highlights the first non-patch version in the same panel; detected via .dif URL or comment keywords</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.48.0<span class="cl-date">2026-05-27</span></div>
@@ -983,6 +1044,22 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
   <div style="font-size:18px;font-weight:600;color:#9c93ff;text-shadow:0 2px 12px rgba(0,0,0,0.6)">Drop files to install</div>
   <div style="font-size:12px;color:#6c63ff99">VPX, ZIP, RAR, ROM, backglass, wheel, media, PuP Pack</div>
 </div>
+<div class="modal-overlay" id="profileNameModal" onclick="if(event.target===this)hideProfileNameModal()">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <h2>💾 Save Profile</h2>
+      <button class="modal-close" onclick="hideProfileNameModal()">✕</button>
+    </div>
+    <div style="margin-bottom:16px;font-size:13px;color:#aaa">Enter a name for this path configuration:</div>
+    <input id="profileNameInput" type="text" placeholder='e.g. "Cabinet" or "Desktop Rig"'
+      style="width:100%;background:#0f0f13;border:1px solid #3a3a4a;border-radius:8px;color:#ccc;font-size:13px;padding:9px 12px;box-sizing:border-box;outline:none"
+      onkeydown="if(event.key==='Enter')confirmSaveProfile();if(event.key==='Escape')hideProfileNameModal()">
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button onclick="hideProfileNameModal()" style="padding:7px 16px;background:#2a2a3a;color:#888;border:1px solid #3a3a4a;border-radius:8px;font-size:13px;cursor:pointer">Cancel</button>
+      <button onclick="confirmSaveProfile()" style="padding:7px 18px;background:#6c63ff;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Save</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="confirmModal">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
@@ -1085,6 +1162,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
             <button class="btn-sm" onclick="showHistoryModal()" style="color:#555" title="Install history">🕐 History</button>
             <button class="btn-sm" onclick="showSettingsModal()" style="color:#555" title="Settings">⚙ Settings</button>
             <button class="btn-sm" onclick="showHelpModal()" style="color:#555" title="Help &amp; known limitations">? Help</button>
+            <button class="btn-sm" onclick="showFeedbackModal()" style="color:#6c63ff" title="Send feedback or report a bug">💬 Feedback</button>
           </div>
         </div>
       </div>
@@ -1094,10 +1172,6 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
       <select id="mfr" onchange="applyFilters()"><option value="">All manufacturers</option></select>
       <select id="typeFilter" onchange="applyFilters()" style="flex:none">
         <option value="">All types</option>
-        <option value="SS">SS — Solid State</option>
-        <option value="EM">EM — Electro-Mechanical</option>
-        <option value="PM">PM — Pure Mechanical</option>
-        <option value="Original">Original</option>
       </select>
       <select id="themeFilter" onchange="applyFilters()" style="flex:none"><option value="">All themes</option></select>
       <input type="number" id="yrMin" placeholder="Year from" min="1900" max="2030" oninput="_clearEraChips();applyFilters()" style="width:110px;flex:none">
@@ -1120,7 +1194,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
         <button class="era-chip" id="eraChipClassic" onclick="setEraFilter('classic')" title="1978–1989 solid state golden era">Classic</button>
         <button class="era-chip" id="eraChipGolden"  onclick="setEraFilter('golden')"  title="1990–2000 peak of commercial pinball">Golden Age</button>
         <button class="era-chip" id="eraChipModern"  onclick="setEraFilter('modern')"  title="2001 and beyond">Modern</button>
-        <button class="era-chip" id="eraChipClear"   onclick="setEraFilter(null)"      title="Clear era filter" style="color:#555">✕ era</button>
+        <button class="era-chip" id="eraChipClear"   onclick="setEraFilter(null)"      title="Clear era filter" style="color:#444">✕</button>
       </div>
     </div>
     <div class="results-header">
@@ -1234,6 +1308,50 @@ function hideSettingsModal() {
 
 function showHelpModal() { document.getElementById('helpModal').classList.add('open'); }
 function hideHelpModal() { document.getElementById('helpModal').classList.remove('open'); }
+
+let _feedbackType = 'bug';
+function showFeedbackModal() {
+  setFeedbackType('bug');
+  document.getElementById('fbDescription').value = '';
+  document.getElementById('fbEmail').value = '';
+  document.getElementById('fbStatus').textContent = '';
+  document.getElementById('feedbackModal').classList.add('open');
+  setTimeout(() => document.getElementById('fbDescription').focus(), 80);
+}
+function hideFeedbackModal() { document.getElementById('feedbackModal').classList.remove('open'); }
+function setFeedbackType(type) {
+  _feedbackType = type;
+  ['bug','idea','other'].forEach(t => {
+    const btn = document.getElementById('fbType' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.style.background = t === type ? '#6c63ff44' : '';
+    if (btn) btn.style.color = t === type ? '#9c93ff' : '';
+  });
+}
+async function submitFeedback() {
+  const desc = (document.getElementById('fbDescription').value || '').trim();
+  if (!desc) { document.getElementById('fbStatus').textContent = '⚠ Please describe the issue or idea.'; return; }
+  const email = (document.getElementById('fbEmail').value || '').trim();
+  const statusEl = document.getElementById('fbStatus');
+  statusEl.textContent = 'Sending…';
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/feedback`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ type: _feedbackType, description: desc, email: email || null, app_version: (document.querySelector('.version')?.textContent || 'unknown') })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    statusEl.textContent = '✓ Sent — thank you!';
+    setTimeout(() => hideFeedbackModal(), 1800);
+  } catch(e) {
+    statusEl.textContent = '⚠ Failed to send — check your connection.';
+    logError('Feedback submit failed: ' + e.message);
+  }
+}
+
+async function vpConfirm(msg) {
+  if (window.electronAPI?.confirm) return window.electronAPI.confirm(msg);
+  return window.confirm(msg);
+}
 
 // --- Logging ---
 const LOG_ENTRIES = [];
@@ -1697,15 +1815,15 @@ async function showDbChangesModal() {
       if (entry.added.length) {
         html += `<div style="color:#3ecfcf;font-weight:600;font-size:12px;margin-bottom:6px">✨ New tables (${entry.added.length})</div>`;
         html += entry.added.map(t => {
-          const sub = [t.mfr, t.year].filter(Boolean).join(' ');
-          return `<div style="font-size:12px;color:#ccc;padding:2px 0 2px 8px">${t.name}${sub ? ` <span style="color:#555">${sub}</span>` : ''}</div>`;
+          const sub = [t.mfr, t.year].filter(Boolean).join(' · ');
+          return `<div style="font-size:12px;color:#ccc;padding:2px 0 2px 8px"><button onclick='jumpToTable(${JSON.stringify(t.id)}, ${JSON.stringify(t.name)})' style="background:none;border:none;color:#3ecfcf;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;font-weight:600">${t.name}</button>${sub ? ` <span style="color:#555;font-size:11px">${sub}</span>` : ''}</div>`;
         }).join('');
       }
       if (entry.updated.length) {
         if (entry.added.length) html += '<div style="margin-top:8px"></div>';
         html += `<div style="color:#f5a623;font-weight:600;font-size:12px;margin-bottom:6px">🔄 Updated (${entry.updated.length})</div>`;
         html += entry.updated.map(t =>
-          `<div style="font-size:12px;color:#ccc;padding:2px 0 2px 8px">${t.name} <span style="color:#555">+${t.gained} file${t.gained !== 1 ? 's' : ''}</span></div>`
+          `<div style="font-size:12px;color:#ccc;padding:2px 0 2px 8px"><button onclick='jumpToTable(${JSON.stringify(t.id)}, ${JSON.stringify(t.name)})' style="background:none;border:none;color:#f5a623;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;font-weight:600">${t.name}</button> <span style="color:#555;font-size:11px">+${t.gained} file${t.gained !== 1 ? 's' : ''} · ${[t.mfr, t.year].filter(Boolean).join(' · ')}</span></div>`
         ).join('');
       }
       html += '</div>';
@@ -1715,8 +1833,60 @@ async function showDbChangesModal() {
   document.getElementById('dbChangesModal').className = 'modal-overlay open';
 }
 
+function scrollToBaseVersion(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  // Find first version item that doesn't have the VPU patch warning
+  const items = panel.querySelectorAll('.version-item');
+  const base = Array.from(items).find(el => !el.dataset.vpuPatch);
+  if (!base) return;
+  base.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  base.style.transition = 'box-shadow 0.4s';
+  base.style.boxShadow = '0 0 0 2px #3ecfcf';
+  setTimeout(() => { base.style.boxShadow = ''; }, 2000);
+}
+
 function hideDbChangesModal() {
   document.getElementById('dbChangesModal').className = 'modal-overlay';
+}
+
+function jumpToTable(id, name) {
+  hideDbChangesModal();
+  setFilter('all');
+  const search = document.getElementById('search');
+  if (search) search.value = name;
+  applyFilters();
+  const idx = filtered.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  if (idx >= renderedUpTo) appendBatch(idx + 1);
+  const panel = document.getElementById(`detail-${idx}`);
+  if (!panel) return;
+  const row = panel.previousElementSibling;
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.transition = 'box-shadow 0.4s';
+    row.style.boxShadow = '0 0 0 2px #3ecfcf';
+    setTimeout(() => { row.style.boxShadow = ''; }, 2500);
+  }
+  // Auto-expand and highlight the newest version entry
+  if (!panel.classList.contains('open')) toggleDetail(idx);
+  const tableObj = filtered[idx];
+  if (tableObj) {
+    const files = tableObj.tableFiles || [];
+    let maxDate = -1, maxVi = -1;
+    files.forEach((f, i) => { if ((f.updatedAt || 0) > maxDate) { maxDate = f.updatedAt || 0; maxVi = i; } });
+    if (maxVi >= 0) {
+      setTimeout(() => {
+        const vEl = panel.querySelector(`[data-vi="${maxVi}"]`);
+        if (vEl) {
+          vEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          vEl.style.transition = 'box-shadow 0.4s';
+          vEl.style.boxShadow = '0 0 0 2px #f5a623';
+          setTimeout(() => { vEl.style.boxShadow = ''; }, 2500);
+        }
+      }, 300);
+    }
+  }
 }
 
 let diffHistoryMax = 10;
@@ -3072,11 +3242,15 @@ async function buildInstallPlan(fileHandles) {
   for (const fh of fileHandles) {
     const file = await fh.getFile();
     const name = file.name;
+    const filePath = fh._electronPath || null;
     const cls = classifyFile(name);
     if (!cls) {
       if (/\.(mp4|f4v|mkv)$/i.test(name)) {
-        skipped.push({ name, reason: 'No keyword found (_Playfield, _BackGlass, _DMD, _Topper, _Wheel, _Menu)' });
+        skipped.push({ name, path: filePath, reason: 'No keyword found (_Playfield, _BackGlass, _DMD, _Topper, _Wheel, _Menu)' });
         logWarn(`Skipped video (no keyword): ${name}`);
+      } else {
+        skipped.push({ name, path: filePath, reason: 'Not a recognized pinball file type' });
+        logWarn(`Skipped unrecognized file: ${name}`);
       }
       continue;
     }
@@ -3107,7 +3281,7 @@ async function buildInstallPlan(fileHandles) {
         } else {
           items.push({ file, name, dest: 'roms', label: 'ROMs', entries: null, isTableZip: false, selected: true });
         }
-      } catch(e) { skipped.push({ name, reason: 'Could not read ZIP: ' + e.message }); }
+      } catch(e) { skipped.push({ name, path: filePath, reason: 'Could not read ZIP: ' + e.message }); }
     } else {
       const item = { file, name, dest: cls.dest, label: cls.label, entries: null, isTableZip: false, selected: true };
       if (name.toLowerCase().endsWith('.vpx')) {
@@ -3684,7 +3858,7 @@ function showInstallPlan(plan, executeCallback) {
   if (vpuRemixItems.length > 0) {
     html += `<div style="margin-top:8px;border:1px solid #ff6b6b44;border-radius:8px;padding:12px 14px;background:#ff6b6b06">`;
     html += `<div style="font-size:12px;color:#ff6b6b;font-weight:600;margin-bottom:6px">🔧 VPU Remix Patches — manual install required (${vpuRemixItems.length})</div>`;
-    html += `<div style="font-size:11px;color:#888;margin-bottom:10px">These <code>.dif</code> patch files require <strong>VPUPatcher64</strong> from vpuniverse.com/tools.<br>Open the tool, select your original <code>.directb2s</code> + the <code>.dif</code> file → Apply Patch → save output as <code>.directb2s</code> → place in Tables folder.<br>See the "VPU Remix use for Backglas Tutorial.pdf" included in each ZIP.</div>`;
+    html += `<div style="font-size:11px;color:#888;margin-bottom:10px">These <code>.dif</code> patch files require <strong>VPUPatcher64</strong> from https://vpuniverse.com/files/file/2581-vpuremix-system-vppatching-system-vpx-only/.<br>Open the tool, select your original <code>.directb2s</code> + the <code>.dif</code> file → Apply Patch → save output as <code>.directb2s</code> → place in Tables folder.<br>See the "VPU Remix use for Backglas Tutorial.pdf" included in each ZIP.</div>`;
     for (const { item } of vpuRemixItems) {
       html += `<div style="font-size:12px;color:#ff6b6b88;padding:2px 0">📦 ${item.name}</div>`;
       if (item.entries) item.entries.filter(e => e.toLowerCase().endsWith('.dif')).forEach(e => { html += `<div style="font-size:11px;color:#555;padding-left:14px">↳ ${e.split('/').pop()}</div>`; });
@@ -3694,7 +3868,14 @@ function showInstallPlan(plan, executeCallback) {
 
   if (plan.skipped.length > 0) {
     html += `<div class="cl-version" style="color:#555;margin-top:12px">⏭ Skipped (${plan.skipped.length})</div>`;
-    plan.skipped.forEach(s => { html += `<div class="cl-item" style="color:#555">${s.name} — <em>${s.reason}</em></div>`; });
+    window.__skipPaths = {};
+    plan.skipped.forEach((s, si) => {
+      if (s.path) window.__skipPaths[si] = s.path;
+      const delBtn = (s.path && window.electronAPI)
+        ? `<button id="skipDel_${si}" onclick="deleteStagingSkip(${si})" style="margin-left:8px;background:#ff444422;border:1px solid #ff444444;color:#ff7070;border-radius:4px;padding:1px 7px;font-size:10px;cursor:pointer" title="Delete from staging">🗑</button>`
+        : '';
+      html += `<div id="skipRow_${si}" class="cl-item" style="color:#555;display:flex;align-items:center;gap:4px"><span>${s.name} — <em>${s.reason}</em></span>${delBtn}</div>`;
+    });
   }
 
   document.getElementById('confirmPlanBody').innerHTML = html;
@@ -4618,6 +4799,35 @@ async function writeToPopperDb(entries = [], oldEntries = [], statusElId = 'dbWr
   }
 }
 
+async function deleteStagingSkip(rowIdx) {
+  if (!window.electronAPI) return;
+  const filePath = window.__skipPaths && window.__skipPaths[rowIdx];
+  if (!filePath) return;
+  const btn = document.getElementById(`skipDel_${rowIdx}`);
+  if (!btn) return;
+  if (!btn._armed) {
+    btn._armed = true;
+    btn.textContent = '⚠ Confirm';
+    btn.style.background = '#ff444433';
+    btn.style.borderColor = '#ff444466';
+    btn.style.color = '#ff7070';
+    btn._resetTimer = setTimeout(() => {
+      btn._armed = false;
+      btn.textContent = '🗑';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '#ff7070';
+    }, 3000);
+    return;
+  }
+  clearTimeout(btn._resetTimer);
+  btn.disabled = true; btn.textContent = '⏳';
+  const result = await window.electronAPI.unlink(filePath);
+  if (result === false) { btn.disabled = false; btn._armed = false; btn.textContent = '🗑'; alert('Could not delete file.'); return; }
+  const row = document.getElementById(`skipRow_${rowIdx}`);
+  if (row) { row.style.opacity = '0.3'; row.style.textDecoration = 'line-through'; btn.remove(); }
+}
+
 async function deleteOldFile(filename, btnId) {
   if (!tablesHandle) {
     alert('Tables folder not set — please configure it in the path panel first.');
@@ -4714,6 +4924,25 @@ function hasWheelMedia(name) {
     return s.includes(c) || c.includes(s);
   });
 }
+
+const IMAGE_EXTS = /\.(png|jpg|jpeg|apng|gif|webp)$/i;
+
+function getLocalMediaUrl(name, scannedList, subfolder, imageOnly = false) {
+  if (!scannedList.length || !electronPaths.popmedia) return null;
+  const c = compact(name);
+  const file = scannedList.find(f => {
+    if (imageOnly && !IMAGE_EXTS.test(f)) return false;
+    const s = compactMediaName(f);
+    if (s.length < 4 && c.length < 4) return s === c;
+    return s.includes(c) || c.includes(s);
+  });
+  if (!file) return null;
+  const fullPath = electronPaths.popmedia.replace(/[\\/]+$/, '') + '\\' + subfolder + '\\' + file;
+  return encodeURI('file:///' + fullPath.replace(/\\/g, '/'));
+}
+
+function getWheelMediaUrl(name)     { return getLocalMediaUrl(name, scannedWheel,     'Wheel',     true); }
+function getBackGlassMediaUrl(name) { return getLocalMediaUrl(name, scannedBackGlass, 'BackGlass', true); }
 
 function hasBackGlassMedia(name) {
   if (!scannedBackGlass.length) return false;
@@ -4825,6 +5054,11 @@ function buildFilters() {
   const mfrSel = document.getElementById('mfr');
   mfrs.forEach(m => { const o = document.createElement('option'); o.value=m; o.textContent=m; mfrSel.appendChild(o); });
 
+  const typeLabels = { SS: 'SS — Solid State', EM: 'EM — Electro-Mechanical', PM: 'PM — Pure Mechanical', OG: 'OG — Original' };
+  const types = [...new Set(allTables.map(t => getType(t)).filter(Boolean))].sort();
+  const typeSel = document.getElementById('typeFilter');
+  if (typeSel) types.forEach(ty => { const o = document.createElement('option'); o.value=ty; o.textContent=typeLabels[ty]||ty; typeSel.appendChild(o); });
+
   const themes = [...new Set(allTables.flatMap(t => getThemes(t)).filter(Boolean))].sort();
   const themeSel = document.getElementById('themeFilter');
   if (themeSel) themes.forEach(th => { const o = document.createElement('option'); o.value=th; o.textContent=th; themeSel.appendChild(o); });
@@ -4930,10 +5164,23 @@ function renderProfileSelect() {
   sel.innerHTML = '<option value="">— unsaved —</option>' +
     _profiles.map(p => `<option value="${p.name.replace(/"/g,'&quot;')}"${p.name===_activeProfile?' selected':''}>${p.name}</option>`).join('');
 }
-async function saveCurrentProfile() {
-  const name = prompt('Profile name (e.g. "Cabinet", "Desktop Rig"):');
-  if (!name || !name.trim()) return;
-  const n = name.trim();
+function saveCurrentProfile() {
+  const sel = document.getElementById('profileSelect');
+  const input = document.getElementById('profileNameInput');
+  if (input) input.value = (sel && sel.value) || '';
+  document.getElementById('profileNameModal').classList.add('open');
+  setTimeout(() => { if (input) input.focus(); }, 80);
+}
+
+function hideProfileNameModal() {
+  document.getElementById('profileNameModal').classList.remove('open');
+}
+
+async function confirmSaveProfile() {
+  const input = document.getElementById('profileNameInput');
+  const n = (input?.value || '').trim();
+  if (!n) { if (input) { input.style.borderColor='#ff6b6b'; setTimeout(()=>input.style.borderColor='',1000); } return; }
+  hideProfileNameModal();
   _profiles = _profiles.filter(p => p.name !== n);
   _profiles.push({ name: n, paths: { ...electronPaths } });
   _activeProfile = n;
@@ -4972,7 +5219,7 @@ async function deleteCurrentProfile() {
   const sel = document.getElementById('profileSelect');
   const name = sel && sel.value;
   if (!name) { alert('Select a saved profile to delete.'); return; }
-  if (!confirm(`Delete profile "${name}"?`)) return;
+  if (!(await vpConfirm(`Delete profile "${name}"?`))) return;
   _profiles = _profiles.filter(p => p.name !== name);
   if (_activeProfile === name) { _activeProfile = ''; localStorage.removeItem('vpmagic_active_profile'); }
   try { await dbPut('cabinet_profiles', _profiles); } catch(e) {}
@@ -5026,7 +5273,7 @@ function hideHistoryModal() {
 }
 
 async function clearInstallHistory() {
-  if (!confirm('Clear all install history?')) return;
+  if (!(await vpConfirm('Clear all install history?'))) return;
   try { await dbDel('install_history'); } catch(e) {}
   await showHistoryModal();
 }
@@ -5048,35 +5295,156 @@ function launchVpx(idx) {
 }
 
 // ── Direct Electron download ──────────────────────────────────────────────────
-function guessDownloadFilename(url, type) {
+function guessDownloadFilename(url, type, tableName) {
+  const knownExts = /\.(vpx|directb2s|zip|rar|png|jpg|jpeg|apng|mp4|f4v|mkv|mp3|wav|dif)$/i;
   try {
     const u = new URL(url);
     const seg = decodeURIComponent(u.pathname.split('/').pop().split('?')[0]);
-    if (seg && seg.includes('.')) return seg;
+    if (seg && knownExts.test(seg)) return seg;
   } catch(e) {}
   const exts = { vpx: '.vpx', b2s: '.directb2s', rom: '.zip', wheel: '.png' };
+  if (tableName) {
+    const safe = tableName.replace(/[<>:"/\\|?*']/g, '').replace(/\s+/g, '_').slice(0, 60);
+    return safe + (exts[type] || '');
+  }
   return `download_${Date.now()}${exts[type] || ''}`;
 }
 
-async function downloadToStaging(url, type) {
+async function downloadToStaging(url, type, btn, tableName) {
   if (!url || url === '#' || !window.electronAPI || !electronPaths.staging) return;
-  const name = guessDownloadFilename(url, type);
-  const dest = electronPaths.staging.replace(/[\\/]+$/, '') + '\\' + name;
   const msEl = document.getElementById('moveStatus');
   const prev = msEl ? msEl.textContent : '';
-  if (msEl) msEl.textContent = `⬇ Downloading ${name}…`;
-  logInfo(`Downloading: ${name}…`);
-  try {
+  const origLabel = btn ? btn.innerHTML : null;
+  const name = guessDownloadFilename(url, type, tableName);
+  const dest = electronPaths.staging.replace(/[\\/]+$/, '') + '\\' + name;
+
+  function setBtnWorking() { if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; btn.style.opacity = '0.7'; } }
+  function setBtnDone()    { if (btn) { btn.innerHTML = '✓';  btn.style.opacity = '1'; setTimeout(() => { btn.innerHTML = origLabel; btn.disabled = false; btn.style.opacity = ''; }, 3000); } }
+  function setBtnReset()   { if (btn) { btn.innerHTML = origLabel; btn.disabled = false; btn.style.opacity = ''; } }
+
+  async function attempt() {
+    setBtnWorking();
+    if (msEl) msEl.textContent = `⬇ Downloading ${name}…`;
     const result = await window.electronAPI.downloadFile(url, dest);
     if (!result || result.error) throw new Error((result && result.error) || 'Download failed');
+    return result;
+  }
+
+  async function onSuccess(result) {
     const mb = result.size ? ` (${(result.size / 1048576).toFixed(1)} MB)` : '';
     logInfo(`Downloaded: ${name}${mb} → staging`);
+    setBtnDone();
     if (msEl) msEl.textContent = `✓ ${name} saved to staging`;
     setTimeout(() => { if (msEl && msEl.textContent.startsWith('✓')) msEl.textContent = prev; }, 4000);
+  }
+
+  async function openDownloadWindow() {
+    let hostname = url;
+    try { hostname = new URL(url).hostname; } catch(_) {}
+    if (btn) { btn.innerHTML = '🔑'; btn.style.opacity = '1'; btn.disabled = true; }
+    if (msEl) msEl.textContent = `🔑 Opening download window for ${hostname} — log in if prompted, then click Download…`;
+    logInfo(`Opening download window for ${url} → ${dest}`);
+    const result = await window.electronAPI.openDownloadWindow(url, dest);
+    if (result && result.size) {
+      logInfo(`Captured via download window: ${result.filename || name}`);
+      setBtnDone();
+      if (msEl) msEl.textContent = `✓ ${result.filename || name} saved to staging`;
+      setTimeout(() => { if (msEl && msEl.textContent.startsWith('✓')) msEl.textContent = prev; }, 4000);
+    } else {
+      // User closed window without downloading
+      setBtnReset();
+      if (msEl) { msEl.textContent = `⚠ No file was downloaded — reopen the window and click Download on the site`; setTimeout(() => { if (msEl) msEl.textContent = ''; }, 7000); }
+    }
+  }
+
+  try {
+    const result = await attempt();
+    await onSuccess(result);
   } catch(e) {
     logError(`Download failed: ${name} — ${e.message}`);
-    if (msEl) msEl.textContent = prev;
-    window.open(url, '_blank');
+    const isAuthError = e.message.includes('HTML') || e.message.includes('403') || e.message.includes('401');
+    if (isAuthError && window.electronAPI.openDownloadWindow) {
+      await openDownloadWindow();
+    } else {
+      // Non-auth error — fall back to external browser
+      setBtnReset();
+      if (msEl) msEl.textContent = prev;
+      window.open(url, '_blank');
+    }
+  }
+}
+
+async function downloadVersionAll(idx, vKey, isVpuPatch) {
+  if (!window.electronAPI || !electronPaths.staging) return;
+  const vUrl   = window.__tableLinks && window.__tableLinks[vKey];
+  const links  = window.__tableLinks && window.__tableLinks[idx];
+  const t      = filtered[idx];
+  const btn    = document.getElementById(`dlVAll_${vKey}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  // For VPU patch rows, also grab the base (non-patch) VPX so the user has both
+  const baseVpxUrl = (isVpuPatch && t) ? getBestSafeVpxUrl(t) : null;
+
+  const queue = [
+    vUrl         ? ['vpx', vUrl]          : null,  // the patch/MOD file itself
+    baseVpxUrl   ? ['vpx', baseVpxUrl]    : null,  // base table (VPU patch only)
+    links?.b2s   ? ['b2s',   links.b2s]  : null,
+    links?.rom   ? ['rom',   links.rom]  : null,
+    links?.wheel ? ['wheel', links.wheel]: null,
+  ].filter(Boolean);
+
+  const tNameV = (window.__tableLinks && window.__tableLinks[idx]?.name) || '';
+  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameV);
+
+  if (isVpuPatch) {
+    const msEl = document.getElementById('moveStatus');
+    if (msEl) {
+      msEl.innerHTML = `⚠ Patch + base table downloaded — still need <a href="https://vpuniverse.com/files/file/2581-vpuremix-system-vppatching-system-vpx-only/" target="_blank" style="color:#f5a623;text-decoration:underline">VPUPatcher64</a> to apply the patch`;
+      setTimeout(() => { msEl.innerHTML = ''; }, 8000);
+    }
+  }
+  if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '⬇ All'; btn.disabled = false; }, 3000); }
+}
+
+function getBestSafeVpxUrl(t) {
+  for (const f of (t.tableFiles || [])) {
+    const comment = f.comment || '';
+    const url = extractUrl(f);
+    if (!url) continue;
+    const isVpuPatch = url.toLowerCase().endsWith('.dif') || /vpu\s*patcher|patcher\s*system/i.test(comment);
+    const needsOriginal = /original\s*table|requires.*original/i.test(comment);
+    if (!isVpuPatch && !needsOriginal) return url;
+  }
+  return null;
+}
+
+async function downloadAllMissing(idx) {
+  const links = window.__tableLinks && window.__tableLinks[idx];
+  if (!links || !window.electronAPI || !electronPaths.staging) return;
+  const t = filtered[idx];
+  const btn = document.getElementById(`dlAll_${idx}`);
+
+  // Use safe VPX URL (skips VPU patches and MODs requiring the original table)
+  const safeVpx = t ? getBestSafeVpxUrl(t) : links.vpx;
+  const skippedVpx = links.vpx && !safeVpx;
+
+  const queue = [
+    safeVpx     ? ['vpx',   safeVpx]    : null,
+    links.b2s   ? ['b2s',   links.b2s]  : null,
+    links.rom   ? ['rom',   links.rom]  : null,
+    links.wheel ? ['wheel', links.wheel]: null,
+  ].filter(Boolean);
+
+  if (!queue.length) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Downloading…'; }
+  const tNameA = links.name || '';
+  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameA);
+
+  const msEl = document.getElementById('moveStatus');
+  if (skippedVpx && msEl) msEl.textContent = '⚠ VPX skipped — all versions require VPU Patcher or original table';
+  if (btn) {
+    btn.textContent = skippedVpx ? '⚠ VPX skipped' : '✓ Done';
+    setTimeout(() => { btn.textContent = '⬇ All'; btn.disabled = false; }, 4000);
   }
 }
 
@@ -5398,11 +5766,18 @@ function computeDuplicates() {
 }
 
 // Returns the duplicate file group for table t, or null if no duplicates.
+// Filters the group to files whose embedded year (if any) matches the table's year,
+// preventing false positives when two tables share a compact name (e.g. Playboy Bally vs Stern).
 function getDuplicateFiles(t) {
   if (!duplicateGroups.length) return null;
   const meta = getInstalledMeta(t);
   if (!meta) return null;
-  return duplicateGroups.find(g => g.includes(meta.filename)) || null;
+  const group = duplicateGroups.find(g => g.includes(meta.filename));
+  if (!group) return null;
+  const tYear = String(getYear(t) || '');
+  if (!tYear) return group;
+  const relevant = group.filter(f => { const m = f.match(/\b(19|20)\d{2}\b/); return !m || m[0] === tYear; });
+  return relevant.length >= 2 ? relevant : null;
 }
 
 // Wrapper for deleteOldFile that avoids embedding filenames directly in onclick strings.
@@ -5532,10 +5907,15 @@ function appendBatch(targetCount) {
       ? (Array.isArray(tableFiles[0].authors) ? tableFiles[0].authors.join(', ') : tableFiles[0].authors)
       : '';
     const versions = tableFiles.length > 1 ? `${tableFiles.length} versions` : '';
-    const imgUrl = getImgUrl(t);
-    const thumb = imgUrl
-      ? `<img class="thumb" src="${imgUrl}" loading="lazy" onerror="this.style.visibility='hidden'" alt="">`
-      : `<div class="thumb"></div>`;
+    const vpsImgUrl   = getImgUrl(t);
+    const localImgUrl = getBackGlassMediaUrl(name) || getWheelMediaUrl(name);
+    const imgUrl = vpsImgUrl || localImgUrl;
+    const thumbSrc = vpsImgUrl || localImgUrl || '';
+    const thumbFallback = vpsImgUrl && localImgUrl ? localImgUrl : '';
+    const thumbPlaceholderText = name.replace(/['"]/g, '').trim().slice(0, 28);
+    const thumb = thumbSrc
+      ? `<img class="thumb" src="${thumbSrc}" loading="lazy" onerror="${thumbFallback ? `this.src='${thumbFallback}';this.onerror=function(){this.parentNode.replaceChild(Object.assign(document.createElement('div'),{className:'thumb thumb-placeholder',textContent:'${thumbPlaceholderText.replace(/'/g,"\\'")}'}),this);}` : `this.parentNode.replaceChild(Object.assign(document.createElement('div'),{className:'thumb thumb-placeholder',textContent:'${thumbPlaceholderText.replace(/'/g,"\\'")}'}),this)`}" alt="">`
+      : `<div class="thumb thumb-placeholder">${thumbPlaceholderText}</div>`;
     const instMeta = inst ? getInstalledMeta(t) : null;
     const installedFile = inst ? getInstalledVpsFile(t) : null;
     const instVersion  = instMeta?.cVersion || installedFile?.version || null;
@@ -5546,13 +5926,14 @@ function appendBatch(targetCount) {
     const instFileDate = installedFile ? fmtVpsDate(installedFile.updatedAt) : null;
     const b2sInst = isB2sInstalled(name);
     const povInst = isPovInstalled(name);
+    const wheelInst    = scannedWheel.length > 0 && !!getWheelMediaUrl(name);
     const wheelMissing = inst && scannedWheel.length > 0 && !hasWheelMedia(name);
     const bgMissing    = inst && scannedBackGlass.length > 0 && !hasBackGlassMedia(name);
     const popperReg    = getPopperRegistered(t);
     const popperIgnoreCname = popperReg === false ? compact((getInstalledFilename(t)||'').replace(/\.vpx$/i,'')) : '';
     const useDirectDl  = !!(window.electronAPI && electronPaths.staging);
     window.__tableLinks = window.__tableLinks || {};
-    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl };
+    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name };
     const noteData = getTableNote(t);
     const cr = communityRatings.get(t.id) || null;
     return `<div>
@@ -5568,7 +5949,7 @@ function appendBatch(targetCount) {
           ${b2sInst?'<span class="badge b2s-ok" title="B2S backglass installed">✓ b2s</span>':b2sUrl?'<span class="badge has-b2s">backglass</span>':''}
           ${povInst?'<span class="badge pov-ok" title="POV file installed">✓ pov</span>':''}
           ${romUrl?(romExactInstalled?'<span class="badge rom-ok" title="ROM installed">✓ rom</span>':romCompatInstalled?'<span class="badge rom-compat" title="Compatible ROM revision installed">⊕ rom</span>':'<span class="badge has-rom">rom</span>'):''}
-          ${wheelUrl?'<span class="badge has-wheel">wheel</span>':''}
+          ${wheelInst?'<span class="badge wheel-ok" title="Wheel image installed">✓ wheel</span>':wheelUrl?'<span class="badge has-wheel">wheel</span>':''}
           ${wheelMissing?'<span class="badge media-warn" title="No wheel image in POPMedia\\Wheel\\">⚠ no wheel</span>':''}
           ${bgMissing?'<span class="badge media-info" title="No Popper backglass media in POPMedia\\BackGlass\\ — this is separate from the .directb2s file; media videos are sourced from VPinUniverse and cannot be downloaded from within this app">no bg media</span>':''}
           ${popperReg===false?`<span class="badge popper-warn" style="display:inline-flex;align-items:center;gap:3px" title="Not registered in PinUp Popper — use Install Files to add">⚠ not in Popper<button onclick="ignorePopperTable('${popperIgnoreCname}');event.stopPropagation()" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:11px;opacity:.7" title="Suppress this badge for this table">×</button></span>`:''}
@@ -5579,10 +5960,11 @@ function appendBatch(targetCount) {
         </div>
         <div class="dl-group">
           ${useDirectDl
-            ? `<button class="dl-btn vpx ${tableUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].vpx,'vpx');event.stopPropagation()" title="Download to staging">⬇ VPX</button>
-               <button class="dl-btn b2s ${b2sUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].b2s,'b2s');event.stopPropagation()" title="Download to staging">🖼 B2S</button>
-               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom');event.stopPropagation()" title="Download to staging">🎮 ROM</button>
-               <button class="dl-btn wheel ${wheelUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].wheel,'wheel');event.stopPropagation()" title="Download to staging">🎡 Wheel</button>`
+            ? `<button class="dl-btn vpx ${tableUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].vpx,'vpx',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">⬇ VPX</button>
+               <button class="dl-btn b2s ${b2sUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].b2s,'b2s',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">🖼 B2S</button>
+               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download ROM — logs in automatically if needed">🎮 ROM</button>
+               <button class="dl-btn wheel ${wheelUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].wheel,'wheel',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">🎡 Wheel</button>
+               <button id="dlAll_${idx}" class="dl-btn" style="background:#ffffff0a;color:#aaa;border:1px solid #ffffff22" onclick="downloadAllMissing(${idx});event.stopPropagation()" title="Download all available files to staging">⬇ All</button>`
             : `<a href="${tableUrl||'#'}" class="dl-btn vpx ${tableUrl?'':'off'}" ${tableUrl?'target="_blank"':''} onclick="event.stopPropagation()">⬇ VPX</a>
                <a href="${b2sUrl||'#'}" class="dl-btn b2s ${b2sUrl?'':'off'}" ${b2sUrl?'target="_blank"':''} onclick="event.stopPropagation()">🖼 B2S</a>
                <a href="${romUrl||'#'}" class="dl-btn rom ${romUrl?'':'off'}" ${romUrl?'target="_blank"':''} onclick="event.stopPropagation()">🎮 ROM</a>
@@ -5608,6 +5990,12 @@ function appendBatch(targetCount) {
               const vComment = tf.comment || '';
               const isInst = instVpsFile === tf;
               const installedTag = isInst ? `<span style="color:#3ecfcf;font-size:11px;font-weight:600;margin-left:8px">✓ installed</span>` : '';
+              const searchMatch = searchHighlightTerm && vAuth.toLowerCase().includes(searchHighlightTerm.toLowerCase());
+              const vAuthHl = searchMatch ? hlSearch(vAuth, searchHighlightTerm) : vAuth;
+              const isVpuPatch = (vUrl && vUrl.toLowerCase().endsWith('.dif')) || /vpu\s*patcher|patcher\s*system/i.test(vComment);
+              const requiresOriginal = /original\s*table|requires.*original/i.test(vComment);
+              const vpuLine = isVpuPatch ? `<div style="font-size:10px;margin-top:3px">⚠ <a href="https://vpuniverse.com/files/file/2581-vpuremix-system-vppatching-system-vpx-only/" target="_blank" style="color:#f5a623;text-decoration:underline" onclick="event.stopPropagation()">Requires VPUPatcher64</a> — apply patch manually after downloading</div>` : '';
+              const origLine = requiresOriginal ? `<div style="font-size:10px;margin-top:2px">⚠ <button onclick="event.stopPropagation();scrollToBaseVersion('detail-${idx}')" style="background:none;border:none;color:#f5a623;text-decoration:underline;cursor:pointer;font-size:10px;padding:0">Requires original table</button> — click to highlight base version in this panel</div>` : '';
               let romLine = '';
               if (vpsRomName) {
                 if (romExactInstalled) {
@@ -5615,7 +6003,9 @@ function appendBatch(targetCount) {
                 } else if (romCompatInstalled) {
                   romLine = `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — compatible version installed (may work)</div>`;
                 } else if (romUrl) {
-                  romLine = `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <a href="${romUrl}" target="_blank" style="color:#f5a623;text-decoration:underline" onclick="event.stopPropagation()">download</a></div>`;
+                  romLine = useDirectDl
+                    ? `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <button onclick="event.stopPropagation();downloadToStaging('${romUrl}','rom',this)" style="background:none;border:none;color:#f5a623;text-decoration:underline;cursor:pointer;font-size:10px;padding:0">download</button></div>`
+                    : `<div style="font-size:10px;color:#f5a623;margin-top:3px">⚠️ ROM: ${vpsRomName}.zip — <a href="${romUrl}" target="_blank" style="color:#f5a623;text-decoration:underline" onclick="event.stopPropagation()">download</a></div>`;
                 } else {
                   romLine = `<div style="font-size:10px;color:#555;margin-top:3px">ROM: ${vpsRomName}.zip — not installed</div>`;
                 }
@@ -5624,11 +6014,14 @@ function appendBatch(targetCount) {
               window.__tableLinks = window.__tableLinks || {};
               window.__tableLinks[vKey] = vUrl;
               const dlBtn = useDirectDl && vUrl
-                ? `<button class="dl-btn vpx" onclick="downloadToStaging(window.__tableLinks['${vKey}'],'vpx')" title="Download to staging">⬇ Download</button>`
-                : `<a href="${vUrl||'#'}" class="dl-btn vpx ${vUrl?'':'off'}" ${vUrl?'target="_blank"':''}>⬇ Download</a>`;
-              return `<div class="version-item${isInst?' installed':''}">
-                <div class="version-info"><strong>${vAuth}</strong>${vVer?' v'+vVer:''}${installedTag}${vDate?` <span style="color:#555;font-size:11px">· ${vDate}</span>`:''}${vComment?` <span style="color:#666">— ${vComment}</span>`:''}${romLine}</div>
-                ${dlBtn}
+                ? `<button class="dl-btn vpx" onclick="downloadToStaging(window.__tableLinks['${vKey}'],'vpx',this)" title="Download VPX only">⬇ VPX</button>`
+                : `<a href="${vUrl||'#'}" class="dl-btn vpx ${vUrl?'':'off'}" ${vUrl?'target="_blank"':''}>⬇ VPX</a>`;
+              const allBtn = useDirectDl && vUrl
+                ? `<button id="dlVAll_${vKey}" class="dl-btn vpx" style="opacity:0.7" onclick="downloadVersionAll(${idx},'${vKey}',${isVpuPatch?1:0});event.stopPropagation()" title="Download this version + ROM + B2S + Wheel">⬇ All</button>`
+                : '';
+              return `<div class="version-item${isInst?' installed':''}${searchMatch?' search-match':''}" data-vi="${vi}"${isVpuPatch?' data-vpu-patch="1"':''}>
+                <div class="version-info"><strong>${vAuthHl}</strong>${vVer?' v'+vVer:''}${installedTag}${vDate?` <span style="color:#555;font-size:11px">· ${vDate}</span>`:''}${vComment?` <span style="color:#666">— ${vComment}</span>`:''}${romLine}${vpuLine}${origLine}</div>
+                <div style="display:flex;gap:5px;flex-shrink:0">${dlBtn}${allBtn}</div>
               </div>`;
             }).join('');
           })()}

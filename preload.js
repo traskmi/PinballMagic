@@ -25,9 +25,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   watchStaging:    (p) => ipcRenderer.invoke('fs:watchStaging', p),
   onStagingCount:  (cb) => ipcRenderer.on('staging:count', (_, n) => cb(n)),
   offStagingCount: ()  => ipcRenderer.removeAllListeners('staging:count'),
+  confirm:          (msg) => ipcRenderer.invoke('dialog:confirm', msg),
   showItemInFolder: (p) => ipcRenderer.invoke('shell:showItemInFolder', p),
   openPath:         (p) => ipcRenderer.invoke('shell:openPath', p),
   downloadFile:     (url, dest) => ipcRenderer.invoke('download:file', url, dest),
   onDownloadProgress:  (cb) => ipcRenderer.on('download:progress', (_, d) => cb(d)),
   offDownloadProgress: ()  => ipcRenderer.removeAllListeners('download:progress'),
+  openDownloadWindow:  (url, dest) => ipcRenderer.invoke('auth:openDownloadWindow', url, dest),
+  hasCookiesForUrl:    (url) => ipcRenderer.invoke('auth:hasCookiesForUrl', url),
+  clearCookiesForUrl:  (url) => ipcRenderer.invoke('auth:clearCookiesForUrl', url),
 });

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain, dialog, session, net } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -32,6 +32,20 @@ function createWindow() {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  // Dev-only shortcuts (Ctrl+R = reload, Ctrl+Shift+I = DevTools) — disabled in packaged builds
+  if (!app.isPackaged) {
+    win.webContents.on('before-input-event', (event, input) => {
+      if (input.control && input.key === 'r') {
+        win.webContents.reload();
+        event.preventDefault();
+      }
+      if (input.control && input.shift && input.key === 'I') {
+        win.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    });
+  }
 }
 
 // Native file picker — returns array of selected paths (empty if cancelled)
@@ -342,42 +356,124 @@ ipcMain.handle('fs:watchStaging', async (event, p) => {
 });
 
 // Open a file or folder in the system default app / file manager
+ipcMain.handle('dialog:confirm', async (event, msg) => {
+  const { response } = await dialog.showMessageBox({ type: 'question', buttons: ['Cancel', 'OK'], defaultId: 1, cancelId: 0, message: msg });
+  return response === 1;
+});
 ipcMain.handle('shell:openPath', (event, p) => shell.openPath(p));
 ipcMain.handle('shell:showItemInFolder', (event, p) => { shell.showItemInFolder(p); });
 
-// Download a URL directly to a local file, following redirects
-ipcMain.handle('download:file', async (event, url, destPath) => {
-  const https = require('https');
-  const http  = require('http');
+// Persistent session shared between the ROM login window and download cookie injection.
+// Cookies are stored on disk and survive app restarts.
+function romSession() { return session.fromPartition('persist:rom-sites'); }
+
+// Open an embedded download window using the persistent ROM session.
+// If a file download starts inside the window (user clicks Download on the site),
+// it is intercepted and saved directly to destPath — the window closes automatically.
+// If the user closes the window without downloading, resolves with { closed: true }.
+ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath) => {
   return new Promise((resolve, reject) => {
-    function doRequest(u, hops) {
-      if (hops > 12) { reject(new Error('Too many redirects')); return; }
-      const mod = u.startsWith('https') ? https : http;
-      const req = mod.get(u, { headers: { 'User-Agent': 'Mozilla/5.0 PinballMagic/2.36' } }, res => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          res.resume();
-          let loc = res.headers.location;
-          if (!/^https?:/.test(loc)) loc = new URL(loc, new URL(u)).href;
-          doRequest(loc, hops + 1);
-          return;
-        }
-        if (res.statusCode !== 200) { res.resume(); reject(new Error('HTTP ' + res.statusCode)); return; }
-        const total = parseInt(res.headers['content-length'] || '0');
-        let received = 0;
-        try { fs.mkdirSync(fsPath.dirname(destPath), { recursive: true }); } catch(_) {}
-        const out = fs.createWriteStream(destPath);
-        res.on('data', chunk => {
-          received += chunk.length;
+    const loginWin = new BrowserWindow({
+      width: 1100, height: 800,
+      webPreferences: { session: romSession(), nodeIntegration: false, contextIsolation: true },
+      title: 'Log in if prompted, then click Download — window closes automatically when done',
+      parent: BrowserWindow.getFocusedWindow() || undefined,
+    });
+    loginWin.setMenu(null);
+
+    let captured = false;
+
+    // Intercept any file download that starts in this window
+    romSession().once('will-download', (e, item) => {
+      captured = true;
+      // Use the site's real filename, saved into the staging folder
+      const stagingDir = destPath ? destPath.replace(/[\\/][^\\/]+$/, '') : fsPath.dirname(destPath);
+      const realName = item.getFilename() || fsPath.basename(destPath);
+      item.setSavePath(fsPath.join(stagingDir, realName));
+      item.on('updated', (e, state) => {
+        if (state === 'progressing') {
+          const received = item.getReceivedBytes();
+          const total = item.getTotalBytes();
           if (total > 0) event.sender.send('download:progress', { received, total });
-        });
-        res.pipe(out);
-        out.on('finish', () => resolve({ size: received }));
-        out.on('error', reject);
-        res.on('error', reject);
+        }
       });
-      req.on('error', reject);
-    }
-    doRequest(url, 0);
+      item.on('done', (e, state) => {
+        if (state === 'completed') {
+          resolve({ size: item.getReceivedBytes(), filename: item.getFilename() });
+        } else {
+          reject(new Error('Download ' + state));
+        }
+        if (!loginWin.isDestroyed()) loginWin.close();
+      });
+    });
+
+    loginWin.on('closed', () => {
+      if (!captured) resolve({ closed: true });
+    });
+
+    loginWin.loadURL(url);
+  });
+});
+
+// Returns true if the ROM session has any cookies for the given URL.
+ipcMain.handle('auth:hasCookiesForUrl', async (event, url) => {
+  const cookies = await romSession().cookies.get({ url });
+  return cookies.length > 0;
+});
+
+// Clears all cookies for a site so the user can re-authenticate.
+ipcMain.handle('auth:clearCookiesForUrl', async (event, url) => {
+  try {
+    const origin = new URL(url).origin;
+    await romSession().clearStorageData({ origin, storages: ['cookies'] });
+    return true;
+  } catch(e) { return false; }
+});
+
+// Download a URL to a local file using Electron's net module with the ROM session.
+// useSessionCookies:true means all cookies captured during login are sent automatically,
+// exactly as a browser would — no manual cookie extraction needed.
+ipcMain.handle('download:file', async (event, url, destPath) => {
+  return new Promise((resolve, reject) => {
+    const request = net.request({
+      url,
+      session: romSession(),
+      useSessionCookies: true,
+      redirect: 'follow',
+    });
+    request.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    request.setHeader('Accept', '*/*');
+
+    request.on('redirect', (_code, _method, _redirectUrl, _headers) => {
+      request.followRedirect();
+    });
+
+    request.on('response', response => {
+      if (response.statusCode !== 200) {
+        reject(new Error('HTTP ' + response.statusCode)); return;
+      }
+      const ctRaw = response.headers['content-type'];
+      const ct = (Array.isArray(ctRaw) ? ctRaw[0] : ctRaw || '').toLowerCase();
+      if (ct.startsWith('text/html') || ct.startsWith('text/plain')) {
+        reject(new Error('Server returned HTML instead of a file — login may be required')); return;
+      }
+      const clRaw = response.headers['content-length'];
+      const total = parseInt(Array.isArray(clRaw) ? clRaw[0] : clRaw || '0');
+      let received = 0;
+      try { fs.mkdirSync(fsPath.dirname(destPath), { recursive: true }); } catch(_) {}
+      const out = fs.createWriteStream(destPath);
+      response.on('data', chunk => {
+        received += chunk.length;
+        if (total > 0) event.sender.send('download:progress', { received, total });
+        out.write(chunk);
+      });
+      response.on('end', () => { out.end(); resolve({ size: received }); });
+      response.on('error', err => { out.destroy(); reject(err); });
+      out.on('error', reject);
+    });
+
+    request.on('error', reject);
+    request.end();
   });
 });
 
