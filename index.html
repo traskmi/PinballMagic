@@ -193,6 +193,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
 </style>
 </head>
 <body>
+<div id="privacyBanner" style="display:none;background:#1a1420;border-bottom:1px solid #6c63ff33;padding:10px 24px;font-size:12px;color:#888;display:flex;align-items:center;justify-content:space-between;gap:16px">
+  <span>📊 <strong style="color:#ccc">Anonymous download data</strong> — PinballMagic logs which tables are downloaded (no personal info) to power the 🔥 Hot Right Now list. You can opt out any time in <strong style="color:#ccc">Settings → Privacy</strong>.</span>
+  <button onclick="dismissPrivacyBanner()" style="background:#6c63ff33;border:1px solid #6c63ff55;color:#9c93ff;border-radius:6px;padding:4px 14px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0">Got it</button>
+</div>
 <div class="header">
   <div class="logo">🎰</div>
   <div class="header-text">
@@ -284,6 +288,13 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
         <p><strong>"no bg media" badge is informational only.</strong> It means no backglass <em>video</em> in Popper's <code>POPMedia\BackGlass\</code> — this is separate from the <code>.directb2s</code> file. Popper media videos come from VPinUniverse and cannot be downloaded from within this app. The table will play correctly regardless.</p>
       </div>
 
+      <div style="margin-bottom:18px">
+        <div class="settings-section-title">Data &amp; Privacy</div>
+        <p><strong>Anonymous download counts power 🔥 Hot Right Now.</strong> When you download a table, PinballMagic logs the VPS table ID, an anonymous device ID (randomly generated, never tied to your account or IP), and the file type to a shared database. This data is aggregated to show which tables are most popular across all users.</p>
+        <p><strong>No personal information is collected.</strong> The anonymous device ID is a random string stored only on your device. No name, email, IP address, or account is ever sent.</p>
+        <p><strong>You can opt out any time.</strong> Go to <strong>Settings → Privacy</strong> and turn off "Share anonymous download data." Existing data is not deleted but no new records will be sent.</p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -351,6 +362,19 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
           </div>
           <label class="settings-toggle">
             <input type="checkbox" id="set_debugLogging" onchange="saveSetting('debugLogging',this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Privacy</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Share anonymous download data</div>
+            <div class="settings-hint">Helps power the 🔥 Hot Right Now list — no personal info, just which tables are being downloaded</div>
+          </div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="set_shareDownloadData" onchange="saveSetting('shareDownloadData',this.checked)">
             <span class="slider"></span>
           </label>
         </div>
@@ -1269,7 +1293,7 @@ function isVpwTable(t) {
 }
 
 // --- Settings ---
-const SETTINGS_DEFAULTS = { defaultFilter: 'all', defaultView: 'list', stagingAutoDelete: true, stagingNotify: true, debugLogging: false };
+const SETTINGS_DEFAULTS = { defaultFilter: 'all', defaultView: 'list', stagingAutoDelete: true, stagingNotify: true, debugLogging: false, shareDownloadData: true };
 let settings = (() => {
   try { return Object.assign({}, SETTINGS_DEFAULTS, JSON.parse(localStorage.getItem('vpmagic_settings') || '{}')); }
   catch(e) { return Object.assign({}, SETTINGS_DEFAULTS); }
@@ -1299,12 +1323,26 @@ function showSettingsModal() {
   const chk_del = document.getElementById('set_stagingAutoDelete');
   const chk_ntf = document.getElementById('set_stagingNotify');
   const chk_dbg = document.getElementById('set_debugLogging');
+  const chk_shr = document.getElementById('set_shareDownloadData');
   if (sel_f) sel_f.value = settings.defaultFilter;
   if (sel_v) sel_v.value = settings.defaultView;
   if (chk_del) chk_del.checked = settings.stagingAutoDelete;
   if (chk_ntf) chk_ntf.checked = settings.stagingNotify;
   if (chk_dbg) chk_dbg.checked = settings.debugLogging;
+  if (chk_shr) chk_shr.checked = settings.shareDownloadData !== false;
   document.getElementById('settingsModal').classList.add('open');
+}
+
+function dismissPrivacyBanner() {
+  const b = document.getElementById('privacyBanner');
+  if (b) b.style.display = 'none';
+  try { localStorage.setItem('vpmagic_privacy_shown', '1'); } catch(_) {}
+}
+
+function maybeShowPrivacyBanner() {
+  if (localStorage.getItem('vpmagic_privacy_shown')) return;
+  const b = document.getElementById('privacyBanner');
+  if (b) b.style.display = 'flex';
 }
 
 function hideSettingsModal() {
@@ -1774,6 +1812,7 @@ async function processJson(rawStr, saveToCache) {
   updateDbStatus();
   loadCommunityRatings();
   loadFeaturedJson();
+  maybeShowPrivacyBanner();
   // diff line restored by startup IIFE after processJson completes
 }
 
@@ -5350,7 +5389,7 @@ function guessDownloadFilename(url, type, tableName) {
 }
 
 async function recordTableDownload(vpsId, fileType) {
-  if (!vpsId) return;
+  if (!vpsId || settings.shareDownloadData === false) return;
   try { await sbFetch('/table_downloads', 'POST', { vps_id: vpsId, client_id: CLIENT_ID, file_type: fileType }, { 'Prefer': 'return=minimal' }); } catch(_) {}
 }
 
