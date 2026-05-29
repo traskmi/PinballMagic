@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.60.0</div>
+  <div class="version" onclick="showChangelog()">v2.61.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -389,7 +389,8 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
       <button class="modal-close" onclick="hideChangelog()">✕</button>
     </div>
     <div class="cl-entry">
-      <div class="cl-version">v2.60.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-version">v2.61.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">☑ Sub-item checkboxes in install plan — backglass and medias/ inside a table archive are now individually toggleable; uncheck either to skip installing it while still installing the VPX; medias/ checkbox dims when deselected; selections persist within the install session</div>
       <div class="cl-item">📋 Install plan shows RAR/ZIP sub-contents — table archives now list every notable file inside: VPX files, any .directb2s backglass, and a medias/ folder summary (e.g. "↳ medias/ → Wheel, Topper") so you can see exactly what will be installed before clicking Install</div>
     </div>
     <div class="cl-entry">
@@ -3787,17 +3788,27 @@ function showInstallPlan(plan, executeCallback) {
           vv.slice(0, 2).forEach(e => { ann += `<div style="font-size:11px;color:#555">↳ ${e.split('/').pop()}</div>`; });
           if (vv.length > 2) ann += `<div style="font-size:11px;color:#444">↳ +${vv.length - 2} more VPX</div>`;
           const b2s = item.entries.filter(e => e.toLowerCase().endsWith('.directb2s'));
-          b2s.forEach(e => { ann += `<div style="font-size:11px;color:#555">↳ ${e.split('/').pop()} <span style="color:#3ecfcf;font-size:10px;background:#3ecfcf22;border:1px solid #3ecfcf44;border-radius:99px;padding:1px 6px;margin-left:2px">Backglass</span></div>`; });
+          b2s.forEach(e => {
+            const b2sOn = item.installB2s !== false;
+            ann += `<div style="font-size:11px;color:${b2sOn?'#aaa':'#555'};cursor:pointer;display:flex;align-items:center;gap:5px;margin-top:2px;user-select:none" onclick="event.stopPropagation();toggleSubItem(${idx},'installB2s')">
+              <span style="font-size:13px;flex-shrink:0">${b2sOn?'☑':'☐'}</span>
+              <span>↳ ${e.split('/').pop()} <span style="color:#3ecfcf;font-size:10px;background:#3ecfcf22;border:1px solid #3ecfcf44;border-radius:99px;padding:1px 6px;margin-left:2px">Backglass</span></span>
+            </div>`;
+          });
           const mediaEntries = item.entries.filter(e => e.toLowerCase().startsWith('medias/') && !e.toLowerCase().endsWith('/'));
           if (mediaEntries.length > 0) {
             const mediaTypes = [];
-            if (mediaEntries.some(e => /wheel/i.test(e.split('/').pop())))              mediaTypes.push('Wheel');
+            if (mediaEntries.some(e => /wheel/i.test(e.split('/').pop())))               mediaTypes.push('Wheel');
             if (mediaEntries.some(e => /backglass|back.glass/i.test(e.split('/').pop()))) mediaTypes.push('BackGlass');
-            if (mediaEntries.some(e => /topper/i.test(e.split('/').pop())))             mediaTypes.push('Topper');
-            if (mediaEntries.some(e => /\bdmd\b/i.test(e.split('/').pop())))            mediaTypes.push('DMD');
-            if (mediaEntries.some(e => /playfield|_table/i.test(e.split('/').pop())))   mediaTypes.push('PlayField');
+            if (mediaEntries.some(e => /topper/i.test(e.split('/').pop())))              mediaTypes.push('Topper');
+            if (mediaEntries.some(e => /\bdmd\b/i.test(e.split('/').pop())))             mediaTypes.push('DMD');
+            if (mediaEntries.some(e => /playfield|_table/i.test(e.split('/').pop())))    mediaTypes.push('PlayField');
             const mediaLabel = mediaTypes.length ? mediaTypes.join(', ') : `${mediaEntries.length} file${mediaEntries.length !== 1 ? 's' : ''}`;
-            ann += `<div style="font-size:11px;color:#555">↳ medias/ → <span style="color:#9c93ff">${mediaLabel}</span></div>`;
+            const mediasOn = item.installMedias !== false;
+            ann += `<div style="font-size:11px;color:${mediasOn?'#aaa':'#555'};cursor:pointer;display:flex;align-items:center;gap:5px;margin-top:2px;user-select:none" onclick="event.stopPropagation();toggleSubItem(${idx},'installMedias')">
+              <span style="font-size:13px;flex-shrink:0">${mediasOn?'☑':'☐'}</span>
+              <span>↳ medias/ → <span style="color:${mediasOn?'#9c93ff':'#555'}">${mediaLabel}</span></span>
+            </div>`;
           }
         }
         groupBodyHtml += itemRow(item, idx, ann);
@@ -4009,6 +4020,12 @@ function toggleItemSelection(idx) {
   showInstallPlan(pendingInstall, onConfirm);
 }
 
+function toggleSubItem(idx, key) {
+  const item = pendingInstall.items[idx];
+  item[key] = item[key] === false ? true : false;
+  showInstallPlan(pendingInstall, onConfirm);
+}
+
 function toggleGroupItems(idxs) {
   const allChecked = idxs.every(i => pendingInstall.items[i].selected !== false);
   idxs.forEach(i => { pendingInstall.items[i].selected = !allChecked; });
@@ -4156,7 +4173,9 @@ async function executeInstall(plan) {
           const zipPath = item.file._electronPath;
           const isRar = /\.rar$/i.test(item.file.name);
           const flatFn = isRar ? 'extractRarFlat' : 'extractZipFlat';
-          const tableRes = await window.electronAPI[flatFn](zipPath, electronPaths.tables, ['.vpx', '.directb2s', '.pov']);
+          const tableExts = ['.vpx', '.pov'];
+          if (item.installB2s !== false) tableExts.push('.directb2s');
+          const tableRes = await window.electronAPI[flatFn](zipPath, electronPaths.tables, tableExts);
           if (!tableRes) throw new Error('ZIP extraction failed: ' + item.name);
           for (const r of tableRes) { moved.tables.push(r.name); logInfo(`Copied: ${r.name} → Tables\\ (${(r.size/1048576).toFixed(1)} MB)`); }
           const romRes = await window.electronAPI[flatFn](zipPath, electronPaths.roms, ['.zip']);
@@ -4180,7 +4199,7 @@ async function executeInstall(plan) {
             }
           }
           // Route medias/ subfolder → POPMedia (Wheel, BackGlass, DMD, Topper, PlayField)
-          if (hasMediasFolder && electronPaths.popmedia) {
+          if (hasMediasFolder && electronPaths.popmedia && item.installMedias !== false) {
             logInfo(`Routing medias/ subfolder from ${item.name}…`);
             const mediaRes = await window.electronAPI.extractArchiveMedias(zipPath, electronPaths.popmedia, vpxBaseName);
             if (mediaRes) {
