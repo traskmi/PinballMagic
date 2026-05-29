@@ -199,7 +199,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.55.0</div>
+  <div class="version" onclick="showChangelog()">v2.56.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -363,6 +363,11 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.56.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">📊 Download counter — every successful download (VPX, B2S, ROM, Wheel, All) is logged to Supabase with the VPS table ID, anonymous client ID, and file type; a Supabase view aggregates unique downloaders per table over the last 30 days; the 🔥 Hot Right Now sort category is now driven by real user download data instead of static curation; hot data refreshes hourly and is cached locally</div>
+      <div class="cl-item">⭐ featured.json v2 — all four curated categories now populated: VPW Best Of (27 Williams/Bally classics), Community Picks (30 must-haves), Modern Favorites (14 Stern/JJP), EM Classics (13 golden age tables); all IDs verified against the live VPS database</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.55.0<span class="cl-date">2026-05-28</span></div>
@@ -1521,6 +1526,40 @@ function _parseFeaturedJson(json) {
   featuredData = json;
   featuredSets.clear();
   (json.categories || []).forEach(cat => featuredSets.set(cat.id, new Set(cat.ids || [])));
+  _injectFeaturedSortOptions();
+  loadHotFromSupabase();
+}
+
+let hotDownloadCounts = new Map(); // vps_id → unique_users count
+
+async function loadHotFromSupabase() {
+  const CACHE_KEY = 'vpmagic_hot_sb';
+  const TTL = 60 * 60 * 1000; // 1 hour
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && Date.now() - cached.ts < TTL) {
+      _applyHotData(cached.rows); return;
+    }
+  } catch(_) {}
+  try {
+    const rows = await sbFetch('/hot_tables_30d?select=vps_id,unique_users&order=unique_users.desc&limit=50');
+    if (!rows || !rows.length) return;
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ rows, ts: Date.now() })); } catch(_) {}
+    _applyHotData(rows);
+  } catch(e) { logDebug('Hot from Supabase: ' + e.message); }
+}
+
+function _applyHotData(rows) {
+  hotDownloadCounts.clear();
+  rows.forEach(r => hotDownloadCounts.set(r.vps_id, r.unique_users));
+  const ids = rows.map(r => r.vps_id);
+  const cat = (featuredData?.categories || []).find(c => c.id === 'hot_now');
+  if (cat) {
+    cat.ids = ids;
+    cat.label = '🔥 Hot Right Now';
+    cat.description = 'Most downloaded by PinballMagic users in the last 30 days';
+    featuredSets.set('hot_now', new Set(ids));
+  }
   _injectFeaturedSortOptions();
 }
 
@@ -5310,7 +5349,12 @@ function guessDownloadFilename(url, type, tableName) {
   return `download_${Date.now()}${exts[type] || ''}`;
 }
 
-async function downloadToStaging(url, type, btn, tableName) {
+async function recordTableDownload(vpsId, fileType) {
+  if (!vpsId) return;
+  try { await sbFetch('/table_downloads', 'POST', { vps_id: vpsId, client_id: CLIENT_ID, file_type: fileType }, { 'Prefer': 'return=minimal' }); } catch(_) {}
+}
+
+async function downloadToStaging(url, type, btn, tableName, vpsId) {
   if (!url || url === '#' || !window.electronAPI || !electronPaths.staging) return;
   const msEl = document.getElementById('moveStatus');
   const prev = msEl ? msEl.textContent : '';
@@ -5333,6 +5377,7 @@ async function downloadToStaging(url, type, btn, tableName) {
   async function onSuccess(result) {
     const mb = result.size ? ` (${(result.size / 1048576).toFixed(1)} MB)` : '';
     logInfo(`Downloaded: ${name}${mb} → staging`);
+    if (vpsId) recordTableDownload(vpsId, type);
     setBtnDone();
     if (msEl) msEl.textContent = `✓ ${name} saved to staging`;
     setTimeout(() => { if (msEl && msEl.textContent.startsWith('✓')) msEl.textContent = prev; }, 4000);
@@ -5394,7 +5439,8 @@ async function downloadVersionAll(idx, vKey, isVpuPatch) {
   ].filter(Boolean);
 
   const tNameV = (window.__tableLinks && window.__tableLinks[idx]?.name) || '';
-  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameV);
+  const tIdV   = t?.id || null;
+  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameV, tIdV);
 
   if (isVpuPatch) {
     const msEl = document.getElementById('moveStatus');
@@ -5438,7 +5484,8 @@ async function downloadAllMissing(idx) {
   if (!queue.length) return;
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Downloading…'; }
   const tNameA = links.name || '';
-  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameA);
+  const tIdA   = t?.id || null;
+  for (const [type, url] of queue) await downloadToStaging(url, type, null, tNameA, tIdA);
 
   const msEl = document.getElementById('moveStatus');
   if (skippedVpx && msEl) msEl.textContent = '⚠ VPX skipped — all versions require VPU Patcher or original table';
@@ -5933,7 +5980,7 @@ function appendBatch(targetCount) {
     const popperIgnoreCname = popperReg === false ? compact((getInstalledFilename(t)||'').replace(/\.vpx$/i,'')) : '';
     const useDirectDl  = !!(window.electronAPI && electronPaths.staging);
     window.__tableLinks = window.__tableLinks || {};
-    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name };
+    window.__tableLinks[idx] = { vpx: tableUrl, b2s: b2sUrl, rom: romUrl, wheel: wheelUrl, name, id: t.id };
     const noteData = getTableNote(t);
     const cr = communityRatings.get(t.id) || null;
     return `<div>
@@ -5960,10 +6007,10 @@ function appendBatch(targetCount) {
         </div>
         <div class="dl-group">
           ${useDirectDl
-            ? `<button class="dl-btn vpx ${tableUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].vpx,'vpx',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">⬇ VPX</button>
-               <button class="dl-btn b2s ${b2sUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].b2s,'b2s',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">🖼 B2S</button>
-               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download ROM — logs in automatically if needed">🎮 ROM</button>
-               <button class="dl-btn wheel ${wheelUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].wheel,'wheel',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name);event.stopPropagation()" title="Download to staging">🎡 Wheel</button>
+            ? `<button class="dl-btn vpx ${tableUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].vpx,'vpx',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">⬇ VPX</button>
+               <button class="dl-btn b2s ${b2sUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].b2s,'b2s',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">🖼 B2S</button>
+               <button class="dl-btn rom ${romUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].rom,'rom',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download ROM — logs in automatically if needed">🎮 ROM</button>
+               <button class="dl-btn wheel ${wheelUrl?'':'off'}" onclick="downloadToStaging(window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].wheel,'wheel',this,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].name,window.__tableLinks[${idx}]&&window.__tableLinks[${idx}].id);event.stopPropagation()" title="Download to staging">🎡 Wheel</button>
                <button id="dlAll_${idx}" class="dl-btn" style="background:#ffffff0a;color:#aaa;border:1px solid #ffffff22" onclick="downloadAllMissing(${idx});event.stopPropagation()" title="Download all available files to staging">⬇ All</button>`
             : `<a href="${tableUrl||'#'}" class="dl-btn vpx ${tableUrl?'':'off'}" ${tableUrl?'target="_blank"':''} onclick="event.stopPropagation()">⬇ VPX</a>
                <a href="${b2sUrl||'#'}" class="dl-btn b2s ${b2sUrl?'':'off'}" ${b2sUrl?'target="_blank"':''} onclick="event.stopPropagation()">🖼 B2S</a>
