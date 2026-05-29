@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.58.0</div>
+  <div class="version" onclick="showChangelog()">v2.59.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -393,7 +393,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
       <div class="cl-item">🔒 Privacy notice &amp; opt-out — a one-time banner on first launch explains anonymous download tracking; Settings → Privacy toggle opts out immediately; Help modal includes a full Data &amp; Privacy section covering what is collected, why, and how to opt out</div>
     </div>
     <div class="cl-entry">
-      <div class="cl-version">v2.58.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-version">v2.59.0<span class="cl-date">2026-05-29</span></div>
       <div class="cl-item">🐛 RAR extraction in Electron — table RARs (and backglass/altcolor/altsound RARs) now correctly use the native node-unrar-js IPC path instead of falling through to the CDN WASM browser path; root cause was getFile() on an Electron file handle not forwarding _electronPath to the returned File-like object, so item.file._electronPath was always undefined in executeInstall</div>
       <div class="cl-item">🔇 Quieter scan log — per-file cVersion/cAuthor/cGameName debug lines removed from the scan; the scan-complete INFO summary (e.g. "Scan complete: 71 VPX file(s), 0 with binary version info") still appears and captures the useful aggregate</div>
     </div>
