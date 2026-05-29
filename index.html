@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.62.0</div>
+  <div class="version" onclick="showChangelog()">v2.63.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.63.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🎵 Audio routing from medias/ — files inside a medias/music/ subfolder (or any .mp3/.wav/.ogg/.flac) now route to POPMedia\Audio\ instead of being silently skipped; install plan annotation shows "Audio" in the medias/ summary when audio files are detected; getTargetSubfolder now receives the full entry path so the music/ folder name itself triggers the Audio route regardless of individual filenames</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.62.0<span class="cl-date">2026-05-29</span></div>
@@ -3807,6 +3811,7 @@ function showInstallPlan(plan, executeCallback) {
             if (mediaEntries.some(e => /topper/i.test(e.split('/').pop())))              mediaTypes.push('Topper');
             if (mediaEntries.some(e => /\bdmd\b/i.test(e.split('/').pop())))             mediaTypes.push('DMD');
             if (mediaEntries.some(e => /playfield|_table/i.test(e.split('/').pop())))    mediaTypes.push('PlayField');
+            if (mediaEntries.some(e => /\.(mp3|wav|ogg|flac)$/i.test(e.split('/').pop()) || /music|audio|sound/i.test(e))) mediaTypes.push('Audio');
             const mediaLabel = mediaTypes.length ? mediaTypes.join(', ') : `${mediaEntries.length} file${mediaEntries.length !== 1 ? 's' : ''}`;
             const mediasOn = item.installMedias !== false;
             ann += `<div style="font-size:11px;color:${mediasOn?'#aaa':'#555'};cursor:pointer;display:flex;align-items:center;gap:5px;margin-top:2px;user-select:none" onclick="event.stopPropagation();toggleSubItem(${idx},'installMedias')">
@@ -4212,6 +4217,7 @@ async function executeInstall(plan) {
               if (mediaRes.dmd?.length)       { moved.dmd.push(...mediaRes.dmd);             mediaRes.dmd.forEach(f => logInfo(`Media: ${f} → POPMedia\\DMD\\`)); }
               if (mediaRes.topper?.length)    { moved.topper.push(...mediaRes.topper);       mediaRes.topper.forEach(f => logInfo(`Media: ${f} → POPMedia\\Topper\\`)); }
               if (mediaRes.playfield?.length) { moved.playfield.push(...mediaRes.playfield); mediaRes.playfield.forEach(f => logInfo(`Media: ${f} → POPMedia\\PlayField\\`)); }
+              if (mediaRes.audio?.length)     { moved.audio.push(...mediaRes.audio);         mediaRes.audio.forEach(f => logInfo(`Media: ${f} → POPMedia\\Audio\\`)); }
             }
           }
           moved.zips.push(item.name);

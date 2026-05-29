@@ -322,16 +322,18 @@ ipcMain.handle('fs:extractRarFlat', async (event, rarPath, destDir, filterExts, 
 ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBase, vpxBaseName) => {
   const isRar = /\.rar$/i.test(archivePath);
   const MEDIA_EXTS = new Set(['.png','.jpg','.jpeg','.apng','.gif','.mp4','.f4v','.mkv','.mp3','.wav']);
-  const results = { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], skipped:[] };
+  const results = { wheel:[], backglass:[], dmd:[], topper:[], playfield:[], audio:[], skipped:[] };
 
-  function getTargetSubfolder(filename) {
+  function getTargetSubfolder(filename, entryPath) {
     const f = filename.toLowerCase();
-    if (/wheel/i.test(f))                          return 'Wheel';
+    const p = (entryPath || '').toLowerCase();
+    if (/wheel/i.test(f))                           return 'Wheel';
     if (/backglass|back_glass|back glass/i.test(f)) return 'BackGlass';
-    if (/\bdmd\b/i.test(f))                        return 'DMD';
-    if (/topper/i.test(f))                         return 'Topper';
+    if (/\bdmd\b/i.test(f))                         return 'DMD';
+    if (/topper/i.test(f))                          return 'Topper';
     if (/playfield|play_field|play field/i.test(f)) return 'PlayField';
     if (/\.(mp4|f4v|mkv)$/i.test(f))               return 'PlayField'; // unlabelled video → playfield
+    if (/\.(mp3|wav|ogg|flac)$/i.test(f) || /music|audio|sound/i.test(p)) return 'Audio';
     return null;
   }
 
@@ -352,8 +354,8 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
       const base = h.name.replace(/\\/g, '/').split('/').pop();
       const ext2 = '.' + base.split('.').pop().toLowerCase();
       if (MEDIA_EXTS.has(ext2)) {
-        const sf = getTargetSubfolder(base);
-        if (sf) entries.push({ path: h.name, base });
+        const sf = getTargetSubfolder(base, p);
+        if (sf) entries.push({ path: h.name, base, subfolder: sf });
         else results.skipped.push(base);
       }
     }
@@ -363,8 +365,9 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
       filepath: archivePath,
       targetPath: popmediaBase,
       filenameTransform: (name) => {
+        const entryLower = name.replace(/\\/g, '/').toLowerCase();
         const base2 = name.replace(/\\/g, '/').split('/').pop();
-        const subfolder = getTargetSubfolder(base2);
+        const subfolder = getTargetSubfolder(base2, entryLower);
         if (!subfolder) return base2; // safety net — pre-filter means this shouldn't be reached
         const destDir = fsPath.join(popmediaBase, subfolder);
         fs.mkdirSync(destDir, { recursive: true });
@@ -376,9 +379,11 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
     });
     const extracted = extractor.extract({ files: (h) => entries.some(e => e.path === h.name) });
     for (const f of extracted.files) {
+      const entryLower = f.fileHeader.name.replace(/\\/g, '/').toLowerCase();
       const base2 = f.fileHeader.name.replace(/\\/g, '/').split('/').pop();
-      const subfolder = getTargetSubfolder(base2);
-      if (subfolder) results[subfolder.toLowerCase().replace('backglass','backglass').toLowerCase()]?.push(base2) || results.skipped.push(base2);
+      const subfolder = getTargetSubfolder(base2, entryLower);
+      const key = subfolder ? subfolder.toLowerCase() : null;
+      if (key && results[key]) results[key].push(base2); else results.skipped.push(base2);
       event.sender.send('extract:progress', { file: base2, done: 1 });
     }
   } else {
@@ -395,7 +400,7 @@ ipcMain.handle('fs:extractArchiveMedias', async (event, archivePath, popmediaBas
           if (!base2) { zf.readEntry(); return; }
           const ext2 = '.' + base2.split('.').pop().toLowerCase();
           if (!MEDIA_EXTS.has(ext2)) { zf.readEntry(); return; }
-          const subfolder = getTargetSubfolder(base2);
+          const subfolder = getTargetSubfolder(base2, lower);
           if (!subfolder) { results.skipped.push(base2); zf.readEntry(); return; }
           const destDir = fsPath.join(popmediaBase, subfolder);
           fs.mkdirSync(destDir, { recursive: true });
