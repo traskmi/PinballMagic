@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.64.0</div>
+  <div class="version" onclick="showChangelog()">v2.65.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.65.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🐛 Download tracking — recordTableDownload was only called on direct download success; the download window capture path (used by VPUniverse and other login-gated sites) never called it, so no data reached Supabase; fixed by adding the recordTableDownload call in the openDownloadWindow success branch</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.64.0<span class="cl-date">2026-05-29</span></div>
@@ -5515,6 +5519,7 @@ async function downloadToStaging(url, type, btn, tableName, vpsId) {
     const result = await window.electronAPI.openDownloadWindow(url, dest, type);
     if (result && result.size) {
       logInfo(`Captured via download window: ${result.filename || name}`);
+      if (vpsId) recordTableDownload(vpsId, type);
       setBtnDone();
       if (msEl) msEl.textContent = `✓ ${result.filename || name} saved to staging`;
       setTimeout(() => { if (msEl && msEl.textContent.startsWith('✓')) msEl.textContent = prev; }, 4000);
