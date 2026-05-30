@@ -644,8 +644,15 @@ ipcMain.handle('auth:clearCookiesForUrl', async (event, url) => {
 // Falls back to userData (AppData\Roaming\PinballMagic) if the exe dir isn't writable.
 ipcMain.handle('app:getDir', () => {
   const candidate = app.isPackaged ? path.dirname(app.getPath('exe')) : __dirname;
-  try { fs.mkdirSync(path.join(candidate, '_pmtest'), { recursive: true }); fs.rmdirSync(path.join(candidate, '_pmtest')); return candidate; }
-  catch(_) { return app.getPath('userData'); }
+  try {
+    const test = path.join(candidate, '_pmtest');
+    fs.mkdirSync(test, { recursive: true });
+    fs.rmdirSync(test);
+    return candidate;
+  } catch(_) {
+    // Exe dir isn't writable (e.g. Program Files without admin) — use Documents\PinballMagic
+    return path.join(app.getPath('documents'), 'PinballMagic');
+  }
 });
 
 // Download a URL to a local file using Electron's net module with the ROM session.

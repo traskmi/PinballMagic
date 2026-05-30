@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.69.0</div>
+  <div class="version" onclick="showChangelog()">v2.70.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,11 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.70.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">📁 Better fallback for read-only install dirs — if the exe directory isn't writable (e.g. Program Files without admin rights), Downloads\ and Backups\ are now created under Documents\PinballMagic\ instead of the hidden AppData\Roaming path; Documents is discoverable and accessible</div>
+      <div class="cl-item">🔧 NSIS installer now per-user by default (perMachine: false) — future installs default to AppData\Local\Programs\PinballMagic which is always writable without admin; users can still change the install directory during setup</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.69.0<span class="cl-date">2026-05-29</span></div>

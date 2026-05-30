@@ -1,6 +1,6 @@
 {
   "name": "pinballmagic",
-  "version": "2.69.0",
+  "version": "2.70.0",
   "description": "Virtual pinball cabinet management tool",
   "author": "PinballMagic",
   "main": "main.js",
@@ -45,6 +45,7 @@
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
