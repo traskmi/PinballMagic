@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.67.0</div>
+  <div class="version" onclick="showChangelog()">v2.68.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.68.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">🤖 Auto-click through download modals — after clicking the page-level download button, a MutationObserver watches for any modal that appears and automatically clicks the first "Download" button inside it (handles VPUniverse's multi-version picker modal); observer disconnects after 15s or on first successful click</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.67.0<span class="cl-date">2026-05-29</span></div>

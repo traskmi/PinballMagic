@@ -574,24 +574,42 @@ ipcMain.handle('auth:openDownloadWindow', async (event, url, destPath, fileType)
     };
     sess.on('will-download', onWillDownload);
 
-    // Auto-click the download button once the page loads (if already logged in)
+    // Auto-click the download button once the page loads (if already logged in),
+    // then watch for any modal that appears and click its first Download button too.
     loginWin.webContents.on('did-finish-load', async () => {
       if (captured) return;
       try {
         await loginWin.webContents.executeJavaScript(`
           (function() {
-            const selectors = [
-              'a[href*="?do=download"]',
-              'a[href*="&do=download"]',
-              '[data-ips-hook="download"] a',
-              'a.ipsButton_primary[href*="download"]',
-              'a[href*="/download"][class*="ips"]',
-            ];
-            for (const sel of selectors) {
-              const el = document.querySelector(sel);
-              if (el && el.href) { el.click(); return true; }
+            function tryClick(root) {
+              // IPS download link on the page
+              const linkSels = [
+                'a[href*="?do=download"]',
+                'a[href*="&do=download"]',
+                '[data-ips-hook="download"] a',
+                'a.ipsButton_primary[href*="download"]',
+                'a[href*="/download"][class*="ips"]',
+              ];
+              for (const sel of linkSels) {
+                const el = (root || document).querySelector(sel);
+                if (el) { el.click(); return true; }
+              }
+              // Button inside a modal/dialog labelled "Download"
+              const btns = (root || document).querySelectorAll('button, a[role="button"], input[type="button"]');
+              for (const btn of btns) {
+                if (/^download$/i.test(btn.textContent.trim()) && !btn.disabled) {
+                  btn.click(); return true;
+                }
+              }
+              return false;
             }
-            return false;
+
+            if (tryClick()) return;
+
+            // Watch for modals opening after the page-level click
+            const obs = new MutationObserver(() => { if (tryClick()) obs.disconnect(); });
+            obs.observe(document.body, { childList: true, subtree: true });
+            setTimeout(() => obs.disconnect(), 15000);
           })()
         `);
       } catch(_) {}
