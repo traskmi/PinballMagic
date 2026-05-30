@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.70.0</div>
+  <div class="version" onclick="showChangelog()">v2.71.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,10 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.71.0<span class="cl-date">2026-05-30</span></div>
+      <div class="cl-item">🐛 Staging path not saved when changed via paths panel — changeHandle() in Electron mode was using showDirectoryPicker (browser API) which set stagingHandle but never updated electronPaths.staging; downloadToStaging checks electronPaths.staging and silently returned when it was null, causing files to land in the browser default downloads; fixed by adding an Electron branch to changeHandle that uses the native openDirectory dialog and updates both electronPaths and the IDB-persisted electron_paths in one write</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.70.0<span class="cl-date">2026-05-29</span></div>
@@ -2593,6 +2597,35 @@ async function resetAllPaths() {
 
 async function changeHandle(which) {
   try {
+    // Electron mode: use native dialog and string paths so electronPaths stays in sync
+    if (window.electronAPI) {
+      let chosenPath = null;
+      if (which === 'popperdb') {
+        const paths = await window.electronAPI.openFiles({ title: 'Select PUPDatabase.db', filters: [{ name: 'SQLite', extensions: ['db'] }] });
+        if (!paths || !paths.length) return;
+        chosenPath = paths[0];
+      } else {
+        chosenPath = await window.electronAPI.openDirectory({ title: 'Select folder' });
+        if (!chosenPath) return;
+      }
+      const pathMap = { tables:'tables', roms:'roms', popmedia:'popmedia', pupvideos:'pupvideos', altcolor:'altcolor', altsound:'altsound', staging:'staging', popperbackup:'popperbackup', popperdb:'popperdb' };
+      electronPaths[pathMap[which]] = chosenPath;
+      handlePaths[which] = chosenPath;
+      if (which === 'tables')       tablesHandle       = makeElectronHandle(chosenPath);
+      if (which === 'roms')       { romsHandle         = makeElectronHandle(chosenPath); scanInstalledRomsElectron(); }
+      if (which === 'popmedia')   { popmediaHandle     = makeElectronHandle(chosenPath); performElectronMediaScan(); }
+      if (which === 'pupvideos')    pupVideosHandle    = makeElectronHandle(chosenPath);
+      if (which === 'altcolor')     altcolorHandle     = makeElectronHandle(chosenPath);
+      if (which === 'altsound')     altsoundHandle     = makeElectronHandle(chosenPath);
+      if (which === 'staging')    { stagingHandle      = makeElectronHandle(chosenPath); startStagingWatch(chosenPath); }
+      if (which === 'popperbackup') popperBackupHandle = makeElectronHandle(chosenPath);
+      if (which === 'popperdb')   { popperDbHandle     = makeElectronFileHandle(chosenPath); performElectronPopperScan(); }
+      await Promise.all([dbPut('electron_paths', electronPaths), saveHandlePaths()]);
+      updatePathDisplay();
+      return;
+    }
+
+    // Browser mode: File System Access API
     if (which === 'popperdb') {
       const [handle] = await window.showOpenFilePicker({
         id: 'vpmagic-popperdb',
@@ -2617,7 +2650,6 @@ async function changeHandle(which) {
     if (which === 'altsound')     altsoundHandle     = handle;
     if (which === 'staging')      stagingHandle      = handle;
     if (which === 'popperbackup') popperBackupHandle = handle;
-    // Manual pick: clear any stored path — we only know the folder name
     delete handlePaths[which];
     await Promise.all([dbPut(dbKeys[which], handle), saveHandlePaths()]);
     updatePathDisplay();

@@ -53,7 +53,7 @@ ipcMain.handle('dialog:openFiles', async (event, opts = {}) => {
   const result = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
     title: opts.title || 'Select pinball files',
-    filters: [{ name: 'Pinball files', extensions: ['vpx','directb2s','pov','pdf','zip','rar','png','jpg','jpeg','apng','mp4','f4v','mkv','mp3','wav'] }],
+    filters: opts.filters || [{ name: 'Pinball files', extensions: ['vpx','directb2s','pov','pdf','zip','rar','png','jpg','jpeg','apng','mp4','f4v','mkv','mp3','wav'] }],
   });
   return result.canceled ? [] : result.filePaths;
 });
