@@ -203,7 +203,7 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <h1>Virtual Pinball Magic Downloader</h1>
     <p>Find, download, and install VPX tables — powered by VPS database</p>
   </div>
-  <div class="version" onclick="showChangelog()">v2.68.0</div>
+  <div class="version" onclick="showChangelog()">v2.69.0</div>
 </div>
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)hideHistoryModal()">
   <div class="modal" style="max-width:520px">
@@ -387,6 +387,11 @@ mark { background: rgba(108,99,255,0.28); color: inherit; border-radius: 2px; pa
     <div class="modal-header">
       <h2>🎰 Changelog</h2>
       <button class="modal-close" onclick="hideChangelog()">✕</button>
+    </div>
+    <div class="cl-entry">
+      <div class="cl-version">v2.69.0<span class="cl-date">2026-05-29</span></div>
+      <div class="cl-item">📁 Auto-create Downloads\ and Backups\ on first launch — on a fresh install the app now creates these folders under its own exe directory (e.g. Program Files\PinballMagic\Downloads\) immediately at startup without requiring the user to run Auto-detect first; staging watcher starts automatically so downloaded files are noticed right away</div>
+      <div class="cl-item">🔧 Auto-detect uses exe directory for staging/backup — replaced the vPinball-root-relative pinballmagic\ folder search with app:getDir IPC which returns the actual exe location (packaged) or source root (dev); falls back to AppData\Roaming\PinballMagic if the exe dir is read-only; eliminates the confusion for users installed to Program Files who saw no staging path after Auto-detect</div>
     </div>
     <div class="cl-entry">
       <div class="cl-version">v2.68.0<span class="cl-date">2026-05-29</span></div>
@@ -2676,13 +2681,18 @@ async function autoDetectFromPath(rootPath) {
     staging:   null,
   };
 
-  // PinballMagic app folder — Backups and Downloads live here
-  const pmDir = await tryPath(join(rootPath, 'pinballmagic'), join(rootPath, 'PinballMagic'));
+  // PinballMagic app folder — use appDir() (exe location) so this works for both
+  // packaged installs (e.g. Program Files\PinballMagic) and dev (source root).
+  let pmDir = null;
+  try { if (window.electronAPI.appDir) pmDir = await window.electronAPI.appDir(); } catch(_) {}
+  if (!pmDir) pmDir = await tryPath(join(rootPath, 'pinballmagic'), join(rootPath, 'PinballMagic'));
   if (pmDir) {
     const bk = join(pmDir, 'Backups');
     const dl = join(pmDir, 'Downloads');
-    if (await exists(bk) || await window.electronAPI.mkdir(bk)) foundPaths.popperbackup = bk;
-    if (await exists(dl) || await window.electronAPI.mkdir(dl)) foundPaths.staging = dl;
+    await window.electronAPI.mkdir(bk);
+    await window.electronAPI.mkdir(dl);
+    foundPaths.popperbackup = bk;
+    foundPaths.staging = dl;
   }
 
   logInfo(`Auto-detect results: ${Object.entries(foundPaths).filter(([,v])=>v).map(([k])=>k).join(', ') || 'nothing found'}`);
@@ -6347,6 +6357,27 @@ function renderList() {
         if (electronPaths.staging)  startStagingWatch(electronPaths.staging);
         await loadProfiles();
       } else {
+        // First launch — no saved paths. Create Downloads\ and Backups\ under the app dir
+        // so staging works immediately without the user having to run Auto-detect first.
+        try {
+          if (window.electronAPI.appDir) {
+            const appDirPath = await window.electronAPI.appDir();
+            if (appDirPath) {
+              const dl = appDirPath + '\\Downloads';
+              const bk = appDirPath + '\\Backups';
+              await window.electronAPI.mkdir(dl);
+              await window.electronAPI.mkdir(bk);
+              electronPaths.staging      = dl;
+              electronPaths.popperbackup = bk;
+              stagingHandle      = makeElectronHandle(dl);
+              popperBackupHandle = makeElectronHandle(bk);
+              await dbPut('electron_paths', electronPaths);
+              startStagingWatch(dl);
+              logInfo(`First launch: created staging → ${dl}`);
+              logInfo(`First launch: created backup  → ${bk}`);
+            }
+          }
+        } catch(e) { logWarn('Could not create default staging/backup folders: ' + e.message); }
         updatePathDisplay();
         updateSetupTypeDisplay();
         await loadProfiles();

@@ -639,6 +639,15 @@ ipcMain.handle('auth:clearCookiesForUrl', async (event, url) => {
   } catch(e) { return false; }
 });
 
+// Returns the directory where Downloads\ and Backups\ should live.
+// Packaged: same folder as the exe. Dev: __dirname (source root).
+// Falls back to userData (AppData\Roaming\PinballMagic) if the exe dir isn't writable.
+ipcMain.handle('app:getDir', () => {
+  const candidate = app.isPackaged ? path.dirname(app.getPath('exe')) : __dirname;
+  try { fs.mkdirSync(path.join(candidate, '_pmtest'), { recursive: true }); fs.rmdirSync(path.join(candidate, '_pmtest')); return candidate; }
+  catch(_) { return app.getPath('userData'); }
+});
+
 // Download a URL to a local file using Electron's net module with the ROM session.
 // useSessionCookies:true means all cookies captured during login are sent automatically,
 // exactly as a browser would — no manual cookie extraction needed.
